@@ -31,7 +31,5 @@
 *.p
 .vs/
 Temp/
-Library/ArtifactDB
-Library/PackageCache/*.dylib
-Library/PackageCache/*.so
+/Library/
 

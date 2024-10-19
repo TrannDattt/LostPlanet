@@ -4,273 +4,230 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : Core
 {
-    // Border
-    Border border;
+    // State
+    public Idle idleState;
+    public Run runState;
+    public Dash dashState;
+    public NormalAttack normalAttackState;
+    public ChargeAttack chargeAttackState;
+    public ReleaseChargeAttack releaseChargeAttackState;
+    public Hurt hurtState;
+    public Die dieState;
 
-    // Movement
-    Rigidbody2D playerRb;
-    [SerializeField] float baseSpeed = 2f;
-    float curSpeed;
-    int lookDirection = 1;
+    public bool rangedAttack = false;
 
-    // Health
-    [SerializeField] int baseHealth = 100;
-    int curHealth;
-    Slider healthBar;
+    //For ranged attack
+    public GameObject projectileObject;
+    protected GameObject spawnProjectile;
 
-    // Attack
-    public int baseDamage = 10;
-    [SerializeField] float attackRange = 5f; // For range attack
-    [SerializeField] GameObject attackHitbox;
-    int attackType = 0;
-    int attackTypeCount = 2;
+    float holdTimeCount;
 
-    // Hurt
-    bool isInvi = false;
-    [SerializeField] float inviTime = 1f;
-
-    // Die
-    bool isDeath = false;
-
-    // Action
     public InputAction moveAction;
-    public InputAction dashAction;
-    public InputAction attackAction;
 
-    // Money
-    int coinHave = 0;
-    TextMeshProUGUI coinText;
-
-    // Animation
-    bool isInAnimation = false;
-    Animator animator;
-    RuntimeAnimatorController runtimeAC;
-    Dictionary<string, AnimationClip> clipDict;
+    public float inputX { get; private set; }
+    public float inputY { get; private set; }
 
     // UI
-    [SerializeField] GameObject charUI;
+    //[SerializeField] GameObject charUI;
 
     // Start is called before the first frame update
     void Start()
     {
-        playerRb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        border = GameObject.Find("Path").GetComponent<Border>();
-
-
-        Transform coinTextTransform = charUI.transform.Find("CoinBar/CoinBarContainer/Coin");
-        if (coinTextTransform)
-        {
-            coinText = coinTextTransform.GetComponent<TextMeshProUGUI>();
-        }
-
-        healthBar = charUI.transform.Find("HealthBar").GetComponent<Slider>();
-
-
         moveAction.Enable();
+        moveAction.performed += Move;
 
-        dashAction.Enable();
-        dashAction.performed += Dash;
+        SetInstance();
 
-        attackAction.Enable();
-        attackAction.performed += Attack;
+        SetState(idleState);
+    }
 
-
-        clipDict = new Dictionary<string, AnimationClip>();
-        runtimeAC = animator.runtimeAnimatorController;
-        foreach (AnimationClip clip in runtimeAC.animationClips)
-        {
-            clipDict[clip.name] = clip;
-        }
-
-
-        attackHitbox.SetActive(false);
-        curHealth = baseHealth;
-        curSpeed = baseSpeed;
+    private void Move(InputAction.CallbackContext context)
+    {
+        
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
-        Vector2 vectorLookDirection = moveAction.ReadValue<Vector2>();
+        base.Update();
 
+        GetStatus();
+        ChoseState();
+    }
 
-        // Health
-        if (curHealth <= 0 && !isDeath)
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
+
+        SetBodyVelocity();
+    }
+
+    void GetStatus()
+    {
+        if(curHealth <= 0)
         {
-            isDeath = true;
-            StartCoroutine(Die());
+            body.simulated = false;
+            //Destroy(gameObject, 1);
         }
 
+        Vector2 direction = moveAction.ReadValue<Vector2>();
+        inputX = direction.x;
+        inputY = direction.y;
 
-        // Change direction
-        if(!Mathf.Approximately(vectorLookDirection.x, 0))
+        if (Input.GetKeyDown(KeyCode.Mouse0))
         {
-            lookDirection = vectorLookDirection.x > 0 ? 1 : -1;
+            norAttacking = true;
+            //holdTimeCount = Time.time;
         }
-        transform.localScale = new Vector2(lookDirection, 1);
-        
-        
-        // Movement
-        //transform.position = Vector3.Lerp(transform.position, transform.position + (Vector3)vectorLookDirection, curSpeed * Time.deltaTime);
-        playerRb.position += curSpeed * Time.deltaTime * vectorLookDirection;
-        //playerRb.position = MoveTo(vectorLookDirection, curSpeed);
-        animator.SetFloat("speed", curSpeed * vectorLookDirection.magnitude);
-    }
 
-    private void FixedUpdate()
-    {
-        playerRb.position = border.Re_positioning(playerRb.position);
-    }
-
-    AnimationClip GetAnimationClip(string name)
-    {
-        if (clipDict.TryGetValue(name, out AnimationClip clip))
+        if (Input.GetKey(KeyCode.Mouse0))
         {
-            return clip;
+            if (Time.time - holdTimeCount > chargeAttackState.chargeTime)
+            {
+                charging = true;
+            }
         }
-        return null;
-    }
-
-    void ResetInvoke(String funcName, float timeDelay)
-    {
-        CancelInvoke(funcName);
-        Invoke(funcName, timeDelay);
-    }
-
-    IEnumerator Die()
-    {
-        AnimationClip dieClip = GetAnimationClip("Die");
-        animator.SetTrigger("die");
-        playerRb.simulated = false;
-
-        yield return new WaitForSeconds(dieClip.length);
-        Destroy(gameObject);
-        Time.timeScale = 0;
-    }
-
-
-    // Dash
-    private void Dash(InputAction.CallbackContext context)
-    {
-        AnimationClip dashClip = GetAnimationClip("Dash");
-        Vector2 vectorLookDirection = moveAction.ReadValue<Vector2>();
-
-        if (!isInAnimation)
+        else
         {
-            animator.SetTrigger("dash");
-            isInAnimation = true;
-    
-            Vector3 dashDirection = vectorLookDirection != Vector2.zero ? (Vector3)vectorLookDirection : new Vector3(lookDirection, 0);
+            holdTimeCount = Time.time;
+        }
 
-            StartCoroutine(DashMovement(dashDirection, dashClip.length));
+        if (charging)
+        {
+            heavyAttacking = true;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Mouse1))
+        {
+            dashing = true;
+            Dashing();
         }
     }
 
-    private IEnumerator DashMovement(Vector3 direction, float duration)
+    void SetBodyVelocity()
     {
-        Vector3 startPosition = transform.position;
-        Vector3 destinedPosition = border.Re_positioning(startPosition + direction * duration);
-        float elapsedTime = 0f;
-        StartCoroutine(IFrame(duration));
-
-        while (2 * elapsedTime < duration)
+        if (norAttacking || charging)
         {
-            transform.position = Vector3.Lerp(transform.position, destinedPosition, (2 * elapsedTime / duration));
-            elapsedTime += Time.deltaTime;
-            yield return null;
+            body.velocity = Vector2.zero;
+            return;
         }
 
-        ResetAnimation();
+        if(inputX != 0)
+        {
+            body.transform.localScale = new Vector3(Mathf.Sign(inputX), 1, 1);
+        }
+
+        body.velocity = new Vector2(inputX, inputY) * runState.runSpeed;
     }
 
-    private IEnumerator IFrame(float duration)
+    void ChoseState()
     {
-        if(!isInvi)
+        if (curHealth <= 0)
         {
-            isInvi = true;
+            SetState(dieState);
+            return;
+        }
 
-            yield return new WaitForSeconds(duration);
-            isInvi = false;
+        if (hurting)
+        {
+            SetState(hurtState);
+            return;
+        }
+
+        if (dashing)
+        {
+            SetState(dashState);
+            return;
+        }
+
+        if (heavyAttacking && !charging)
+        {
+            SetState(releaseChargeAttackState);
+            return;
+        }
+
+        if (norAttacking)
+        {
+            if (!rangedAttack)
+            {
+                SetState(normalAttackState);
+                return;
+            }
+            
+        }
+
+        if (charging)
+        {
+            SetState(chargeAttackState);
+            return;
+        }
+
+        if (body.velocity.magnitude > 0)
+        {
+            SetState(runState);
+            return;
+        }
+
+        SetState(idleState);
+    }
+
+    public void ChangeHealth(float amount, bool harmed)
+    {
+        if(amount > 0.1f)
+        {
+            Debug.Log(amount);
+            if (harmed)
+            {
+                curHealth = Mathf.Clamp(curHealth - amount, 0, maxHealth);
+                hurting = true;
+            }
+            else
+            {
+                curHealth = Mathf.Clamp(curHealth + amount, 0, maxHealth);
+            }
         }
     }
 
-    private void Attack(InputAction.CallbackContext context)
+    void Dashing()
     {
-        AnimationClip attackClip = GetAnimationClip("Attack" + (attackType + 1).ToString());
-
-        if (!isInAnimation)
-        {
-            isInAnimation = true;
-            attackHitbox.SetActive(true);
-
-            ResetInvoke("ResetAttackType", 2);
-            animator.SetFloat("attackType", attackType);
-            attackType = attackType >= attackTypeCount ? 0 : attackType + 1;
-
-            animator.SetTrigger("attack");
-
-            Invoke("ResetAnimation", attackClip.length/2);
-            Invoke("DisableAttackHitbox", attackClip.length/2.1f);
-        }
+        body.transform.position += new Vector3(body.velocity.x * dashState.dashSpeed, 0);
     }
 
-    private void ResetAnimation()
-    {
-        isInAnimation = false;
-    }
 
-    void DisableAttackHitbox()
-    {
-        attackHitbox.SetActive(false);
-    }
 
-    void ResetAttackType()
-    {
-        attackType = 0;
-    }
 
-    void ChangeHealth(int amount)
-    {
-        curHealth = Mathf.Clamp(curHealth - amount, 0, baseHealth);
-        healthBar.value = (float)curHealth / baseHealth;
-    }
 
-    IEnumerator GetHit()
-    {
-        AnimationClip getHitClip = GetAnimationClip("GetHit");
-        animator.SetTrigger("getHit");
 
-        yield return new WaitForSeconds(getHitClip.length);
-        isInAnimation = false;
-    }
 
-    public void GainCoin(int value)
-    {
-        coinHave += value;
-        coinText.text = coinHave.ToString();
-    }
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        GameObject collidedObject = collision.gameObject;
 
-        if (collidedObject.layer == LayerMask.NameToLayer("EnemyMeleeAttackHitbox"))
-        {
-            EnemyController enemy = collidedObject.GetComponentInParent<EnemyController>();
-            ChangeHealth(enemy.Damage);
-            StartCoroutine(GetHit());
-        }
+    //public void GainCoin(int value)
+    //{
+    //    coinHave += value;
+    //    coinText.text = coinHave.ToString();
+    //}
 
-        if (collidedObject.layer == LayerMask.NameToLayer("EnemyRangeAttackHitbox"))
-        {
-            Projectile enemyProjectile = collidedObject.GetComponent<Projectile>();
-            ChangeHealth(enemyProjectile.Damage);
-            StartCoroutine(GetHit());
-        }
-    }
+    //private void OnTriggerEnter2D(Collider2D collision)
+    //{
+    //    GameObject collidedObject = collision.gameObject;
+
+    //    if (collidedObject.layer == LayerMask.NameToLayer("EnemyMeleeAttackHitbox"))
+    //    {
+    //        EnemyController enemy = collidedObject.GetComponentInParent<EnemyController>();
+    //        ChangeHealth(enemy.Damage);
+    //        StartCoroutine(GetHit());
+    //    }
+
+    //    if (collidedObject.layer == LayerMask.NameToLayer("EnemyRangeAttackHitbox"))
+    //    {
+    //        Projectile enemyProjectile = collidedObject.GetComponent<Projectile>();
+    //        ChangeHealth(enemyProjectile.Damage);
+    //        StartCoroutine(GetHit());
+    //    }
+    //}
 }

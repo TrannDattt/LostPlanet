@@ -1,206 +1,211 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.Windows;
 
-public class EnemyController : MonoBehaviour
+public class EnemyController : Core
 {
-    // Movement
-    Rigidbody2D enemyRb;
-    [SerializeField] float baseSpeed;
-    float curSpeed;
-    int lookDirection = 1;
+    // State
+    public Idle idleState;
+    public Run runState;
+    public Dash dashState;
+    public NormalAttack normalAttackState;
+    public RangeAttack rangeAttackState;
+    public ChargeAttack chargeAttackState;
+    public ReleaseChargeAttack releaseChargeAttackState;
+    public Hurt hurtState;
+    public Die dieState;
 
-    // Health
-    [SerializeField] int baseHealth;
-    int curHealth;
-    [SerializeField] Slider healthBar;
-    public int Health { get { return curHealth; } }
-    public float HealthPercentage {  get { return (float)curHealth / baseHealth; } }
+    public bool rangedAttack = false;
 
-    // Behavior
-    public bool isChasing = false;
-    GameObject target;
-    public GameObject Target {  get { return target; } }
-    Coroutine currentCoroutine;
-    public List<Coroutine> ActiveCoroutines { get; private set; }
+    //For ranged attack
+    public GameObject projectileObject;
 
-    // Reward
-    [SerializeField] int coinValue = 100;
+    public GameObject target => GameObject.Find("Player");
+    Vector2 direction => target.transform.position - body.transform.position;
 
-    // Die
-    bool isDeath = false;
+    public float triggerDistance;
+    float curDistance => Vector2.Distance(target.transform.position, body.transform.position);
 
-    // Animation
-    public bool isInAnimation = false;
-    Animator animator;
-    RuntimeAnimatorController runtimeAC;
-    Dictionary<string, AnimationClip> clipDict;
+    bool canDash = true;
+    public float dashCdTime;
 
-    // Enemy type
-    BaseEnemy baseEnemy;
-    public int Damage { get { return baseEnemy.Damage; } }
+    bool canAttack = true;
+    public float attackCdTime;
+    public float attackRange;
 
     // Start is called before the first frame update
     void Start()
     {
-        enemyRb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        baseEnemy = GetComponent<BaseEnemy>();
+        SetInstance();
 
-        clipDict = new Dictionary<string, AnimationClip>();
-        runtimeAC = animator.runtimeAnimatorController;
-        foreach (AnimationClip clip in runtimeAC.animationClips)
-        {
-            clipDict[clip.name] = clip;
-        }
-
-        target = GameObject.Find("Player");
-        curHealth = baseHealth;
+        SetState(idleState);
     }
 
     // Update is called once per frame
-    void Update()
+    protected override void Update()
     {
-        // Die
-        if (curHealth <= 0 && !isDeath)
-        {
-            PlayerController player = target.GetComponent<PlayerController>();
-            player.GainCoin(coinValue);
+        base.Update();
 
-            isDeath = true;
-            animator.SetTrigger("die");
+        GetStatus();
+        ChoseState();
+    }
+
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
+    }
+
+    void ChasingTarget()
+    {
+        body.velocity = (curDistance > attackRange) ?
+            direction * runState.runSpeed / Mathf.Max(Mathf.Abs(direction.x), Mathf.Abs(direction.y)) :
+            Vector2.zero;
+
+        if (direction.x != 0)
+        {
+            body.transform.localScale = new Vector3(Mathf.Sign(direction.x), 1, 1);
+        }
+    }
+
+
+
+    void AttackingTarget()
+    {
+        norAttacking = true;
+
+        if (rangedAttack)
+        {
+            GameObject spawnProjectileObject =  Instantiate(projectileObject, 
+                (Vector2)body.transform.position + Mathf.Sign(direction.x) * new Vector2(0.5f, 0), 
+                Quaternion.identity);
+
+            AProjectile projectile = spawnProjectileObject.GetComponent<AProjectile>();
+            projectile.destinatePos = target.transform.position;
+        }
+        
+        StartCoroutine(CooldownAttack());
+    }
+
+
+
+    void Dashing()
+    {
+        if(dashState)
+        {
+            dashing = true;
+            body.transform.position += new Vector3(body.velocity.x * dashState.dashSpeed, 0);
+
+            StartCoroutine(CooldownDash());
+        }
+    }
+
+
+
+    void GetStatus()
+    {
+        if (curHealth <= 0)
+        {
+            body.simulated = false;
             Destroy(gameObject, 1);
-            enemyRb.simulated = false;
         }
 
-
-        // Moving + Change direction
-        transform.localScale = new Vector2(lookDirection, 1);
-        curSpeed = (isChasing && !isInAnimation && !isDeath && !IsInAttackRange()) ? baseSpeed : 0;
-        if(animator.HasState(0, Animator.StringToHash("Run")))
+        if (curDistance <= triggerDistance)
         {
-            animator.SetFloat("speed", curSpeed);
+            ChasingTarget();
         }
 
-
-        // Attack
-        float distance = target ? (target.transform.position - transform.position).magnitude : float.PositiveInfinity;
-        
-
-        if (baseEnemy.canAttack && IsInAttackRange() && !isInAnimation)
+        if (curDistance <= attackRange && canAttack)
         {
-            currentCoroutine = StartCoroutine(baseEnemy.Attack());
-            AddCorountine(currentCoroutine);
-
-            isInAnimation = true;
-            baseEnemy.canAttack = false;
+            canAttack = false;
+            AttackingTarget();
         }
 
-        // Chasing
-        if (distance <= baseEnemy.attackRange)
+        if (curDistance > attackRange && canDash && dashState)
         {
-            isChasing = true;
+            canDash = false;
+            Dashing();
         }
-
-        if (isChasing)
-        {
-            Chase();
-        }
-        
     }
 
-    AnimationClip GetAnimationClip(string name)
+    IEnumerator CooldownDash()
     {
-        if(clipDict.TryGetValue(name, out AnimationClip clip))
-        {
-            return clip;
-        }
-        return null;
+        yield return new WaitForSeconds(dashCdTime);
+        canDash = true;
     }
 
-    public void AddCorountine(Coroutine coroutine)
-    { 
-        ActiveCoroutines.Add(coroutine); 
-    }
-
-    public void StopActiveCoroutines()
+    IEnumerator CooldownAttack()
     {
-        foreach(Coroutine coroutine in ActiveCoroutines)
-        {
-            StopCoroutine(coroutine);
-        }
-        ActiveCoroutines.Clear();
+        yield return new WaitForSeconds(attackCdTime);
+        canAttack = true;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    void ChoseState()
     {
-        GameObject collidedObject = collision.gameObject;
-
-        if (collidedObject.layer == LayerMask.NameToLayer("PlayerMeleeAttackHitbox"))
+        if (curHealth <= 0)
         {
-            PlayerController player = collidedObject.GetComponentInParent<PlayerController>();
-            ChangeHealth(player.baseDamage);
-            StartCoroutine(GetHit());
+            SetState(dieState);
+            return;
         }
-    }
 
-    bool IsInAttackRange()
-    {
-        float distance = target ? (target.transform.position - transform.position).magnitude : float.PositiveInfinity;
-        if(distance <= baseEnemy.attackRange)
+        if (hurting)
         {
-            if (baseEnemy.meleeAttackHitbox && Mathf.Abs(Target.transform.position.y - transform.position.y) <= 0.1f)
+            SetState(hurtState);
+            return;
+        }
+
+        if (dashing && dashState)
+        {
+            SetState(dashState);
+            return;
+        }
+
+        if (norAttacking)
+        {
+            if(!rangedAttack)
             {
-                return true;
+                SetState(normalAttackState);
+                return;
             }
-
-            if (!baseEnemy.meleeAttackHitbox)
+            else
             {
-                return true;
+                SetState(rangeAttackState);
+                return;
             }
         }
-            
-        return false;
-    }
 
-    public void ChangeHealth(int amount)
-    {
-        curHealth = Mathf.Clamp(curHealth - amount, 0, baseHealth);
-        healthBar.value = HealthPercentage;
-    }
-
-    public void ChangeHealth(float amountPercentage)
-    {
-        curHealth = (int)Mathf.Clamp(curHealth - amountPercentage * baseHealth, 0, baseHealth);
-        healthBar.value = HealthPercentage;
-    }
-
-    IEnumerator GetHit()
-    {
-        AnimationClip getHitClip = GetAnimationClip("GetHit");
-        StopActiveCoroutines();
-        animator.SetTrigger("getHit");
-
-        if (baseEnemy.meleeAttackHitbox)
+        if (charging && chargeAttackState)
         {
-            baseEnemy.meleeAttackHitbox.SetActive(false);
+            SetState(chargeAttackState);
+            return;
         }
 
-        yield return new WaitForSeconds(getHitClip.length);
-        isInAnimation = false;
+        if (body.velocity.magnitude > 0)
+        {
+            SetState(runState);
+            return;
+        }
+
+        SetState(idleState);
     }
 
-    private void Chase()
+    public void ChangeHealth(float amount, bool harmed)
     {
-        Vector2 direction = target ? target.transform.position - transform.position : Vector2.zero;
-        lookDirection = (int)direction.normalized.x > 0 ? 1 : -1;
-
-        if (!IsInAttackRange())
+        if (amount > 0.1f)
         {
-            transform.Translate(curSpeed * Time.deltaTime * direction.normalized);
+            if (harmed)
+            {
+                curHealth = Mathf.Clamp(curHealth - amount, 0, maxHealth);
+                hurting = true;
+            }
+            else
+            {
+                curHealth = Mathf.Clamp(curHealth + amount, 0, maxHealth);
+            }
         }
     }
 }

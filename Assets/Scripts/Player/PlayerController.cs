@@ -32,6 +32,9 @@ public class PlayerController : Core
     public float inputX { get; private set; }
     public float inputY { get; private set; }
 
+    public float inviTime;
+    private bool canTakeDamage = true;
+
     // UI
     //[SerializeField] GameObject charUI;
 
@@ -67,11 +70,19 @@ public class PlayerController : Core
         SetBodyVelocity();
     }
 
+    private IEnumerator StopGame()
+    {
+        yield return new WaitForSeconds(1);
+        Time.timeScale = 0;
+    }
+
     void GetStatus()
     {
-        if(curHealth <= 0)
+        if(curHealth <= 0 && !death)
         {
+            death = true;
             body.simulated = false;
+            StartCoroutine(StopGame());
             //Destroy(gameObject, 1);
         }
 
@@ -95,6 +106,7 @@ public class PlayerController : Core
         else
         {
             holdTimeCount = Time.time;
+            charging = false;
         }
 
         if (charging)
@@ -127,7 +139,7 @@ public class PlayerController : Core
 
     void ChoseState()
     {
-        if (curHealth <= 0)
+        if (death)
         {
             SetState(dieState);
             return;
@@ -178,19 +190,27 @@ public class PlayerController : Core
 
     public void ChangeHealth(float amount, bool harmed)
     {
-        if(amount > 0.1f)
+        if (harmed)
         {
-            Debug.Log(amount);
-            if (harmed)
+            if(canTakeDamage)
             {
+                canTakeDamage = false;
+                StartCoroutine(InviCoolDown());
+
                 curHealth = Mathf.Clamp(curHealth - amount, 0, maxHealth);
                 hurting = true;
             }
-            else
-            {
-                curHealth = Mathf.Clamp(curHealth + amount, 0, maxHealth);
-            }
         }
+        else
+        {
+            curHealth = Mathf.Clamp(curHealth + amount, 0, maxHealth);
+        }
+    }
+
+    private IEnumerator InviCoolDown()
+    {
+        yield return new WaitForSeconds(inviTime);
+        canTakeDamage = true;
     }
 
     void Dashing()
@@ -198,36 +218,15 @@ public class PlayerController : Core
         body.transform.position += new Vector3(body.velocity.x * dashState.dashSpeed, 0);
     }
 
-
-
-
-
-
-
-
-
-    //public void GainCoin(int value)
-    //{
-    //    coinHave += value;
-    //    coinText.text = coinHave.ToString();
-    //}
-
-    //private void OnTriggerEnter2D(Collider2D collision)
-    //{
-    //    GameObject collidedObject = collision.gameObject;
-
-    //    if (collidedObject.layer == LayerMask.NameToLayer("EnemyMeleeAttackHitbox"))
-    //    {
-    //        EnemyController enemy = collidedObject.GetComponentInParent<EnemyController>();
-    //        ChangeHealth(enemy.Damage);
-    //        StartCoroutine(GetHit());
-    //    }
-
-    //    if (collidedObject.layer == LayerMask.NameToLayer("EnemyRangeAttackHitbox"))
-    //    {
-    //        Projectile enemyProjectile = collidedObject.GetComponent<Projectile>();
-    //        ChangeHealth(enemyProjectile.Damage);
-    //        StartCoroutine(GetHit());
-    //    }
-    //}
+    public void ChangeCoinHave(int amount, bool isGain)
+    {
+        if(isGain)
+        { 
+            coinHave += amount; 
+        }
+        else
+        {
+            coinHave -= amount;
+        }
+    }
 }

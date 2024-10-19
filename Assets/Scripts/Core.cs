@@ -10,6 +10,8 @@ public abstract class Core : MonoBehaviour
 
     public float damage;
 
+    public int coinHave;
+
     protected StateMachine stateMachine;
 
     public Rigidbody2D body;
@@ -25,6 +27,7 @@ public abstract class Core : MonoBehaviour
     public bool heavyAttacking { get; set; }
     public bool dashing { get; set; }
     public bool hurting { get; set; }
+    public bool death {  get; set; }
 
     public void SetInstance()
     {

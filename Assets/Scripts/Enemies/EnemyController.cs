@@ -25,11 +25,11 @@ public class EnemyController : Core
     //For ranged attack
     public GameObject projectileObject;
 
-    public GameObject target => GameObject.Find("Player");
-    Vector2 direction => target.transform.position - body.transform.position;
+    private PlayerController targetCore => GameObject.Find("Player").GetComponent<PlayerController>();
+    private Vector2 direction => targetCore.body.transform.position - body.transform.position;
+    private float curDistance => Vector2.Distance(targetCore.body.transform.position, body.transform.position);
 
     public float triggerDistance;
-    float curDistance => Vector2.Distance(target.transform.position, body.transform.position);
 
     bool canDash = true;
     public float dashCdTime;
@@ -85,7 +85,7 @@ public class EnemyController : Core
                 Quaternion.identity);
 
             AProjectile projectile = spawnProjectileObject.GetComponent<AProjectile>();
-            projectile.destinatePos = target.transform.position;
+            projectile.destinatePos = targetCore.body.transform.position;
         }
         
         StartCoroutine(CooldownAttack());
@@ -108,9 +108,11 @@ public class EnemyController : Core
 
     void GetStatus()
     {
-        if (curHealth <= 0)
+        if (curHealth <= 0 && !death)
         {
+            death = true;
             body.simulated = false;
+            targetCore.ChangeCoinHave(coinHave, true);
             Destroy(gameObject, 1);
         }
 
@@ -146,7 +148,7 @@ public class EnemyController : Core
 
     void ChoseState()
     {
-        if (curHealth <= 0)
+        if (death)
         {
             SetState(dieState);
             return;

@@ -200,6 +200,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eadf5ebd64dae824c98c28c91c0ce5f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyController: {fileID: 8845880194704967340}
 --- !u!1 &3608158698699832100
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,8 +259,9 @@ GameObject:
   - component: {fileID: 8234659899570769664}
   - component: {fileID: 5299047325521926555}
   - component: {fileID: 4946518795405635321}
+  - component: {fileID: 2597035839240157532}
   m_Layer: 11
-  m_Name: Canvas
+  m_Name: EnemyStatusUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -348,6 +350,22 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &2597035839240157532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4938411902442383090}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 544c953fd56d99740ab4ac1e2c9b0ee4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  core: {fileID: 8845880194704967340}
+  hpManager: {fileID: 4432075193178850992}
+  coinManager: {fileID: 0}
+  statusManager: {fileID: 0}
 --- !u!1 &5106452499848316620
 GameObject:
   m_ObjectHideFlags: 0
@@ -490,7 +508,7 @@ GameObject:
   - component: {fileID: 8059375959977644336}
   - component: {fileID: 55565649503090193}
   m_Layer: 11
-  m_Name: HealthBar
+  m_Name: Bar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -631,6 +649,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   damage: 10
+  coinHave: 100
   body: {fileID: 2669615043613651421}
   colliderDitector: {fileID: 8561964312550468763}
   animator: {fileID: 3964082240500531218}
@@ -895,8 +914,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2848201612947140521}
   - component: {fileID: 1732897920312219}
+  - component: {fileID: 4432075193178850992}
   m_Layer: 11
-  m_Name: HealthBarContainer
+  m_Name: HealthBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -975,6 +995,19 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4432075193178850992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8936835558480441741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 792b71b6a97b5b34eb50624d64345506, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hpSlider: {fileID: 1732897920312219}
 --- !u!1 &9042033162997377227
 GameObject:
   m_ObjectHideFlags: 0

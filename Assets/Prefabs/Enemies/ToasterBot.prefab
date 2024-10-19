@@ -59,7 +59,7 @@ GameObject:
   - component: {fileID: 1501008106475752998}
   - component: {fileID: 3867901164107279933}
   m_Layer: 11
-  m_Name: HealthBar
+  m_Name: Bar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -528,6 +528,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eadf5ebd64dae824c98c28c91c0ce5f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyController: {fileID: 4071035618174060346}
 --- !u!1 &3170076281003945797
 GameObject:
   m_ObjectHideFlags: 0
@@ -538,8 +539,9 @@ GameObject:
   m_Component:
   - component: {fileID: 4381757360253990433}
   - component: {fileID: 6683231853460675747}
+  - component: {fileID: 1467523160868752547}
   m_Layer: 11
-  m_Name: HealthBarContainer
+  m_Name: HealthBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -618,6 +620,19 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1467523160868752547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3170076281003945797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 792b71b6a97b5b34eb50624d64345506, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hpSlider: {fileID: 6683231853460675747}
 --- !u!1 &4863119364259262694
 GameObject:
   m_ObjectHideFlags: 0
@@ -630,8 +645,9 @@ GameObject:
   - component: {fileID: 1152047920217033827}
   - component: {fileID: 4045508912668613071}
   - component: {fileID: 7202939060762034784}
+  - component: {fileID: 380790943701114979}
   m_Layer: 11
-  m_Name: Canvas
+  m_Name: EnemyStatusUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -720,6 +736,22 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &380790943701114979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4863119364259262694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 544c953fd56d99740ab4ac1e2c9b0ee4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  core: {fileID: 4071035618174060346}
+  hpManager: {fileID: 1467523160868752547}
+  coinManager: {fileID: 0}
+  statusManager: {fileID: 0}
 --- !u!1 &7249509434285115815
 GameObject:
   m_ObjectHideFlags: 0
@@ -919,6 +951,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 100
   damage: 10
+  coinHave: 150
   body: {fileID: 7683713871562458663}
   colliderDitector: {fileID: 9106630809551800617}
   animator: {fileID: 4293095580447615604}

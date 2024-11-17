@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class EnemyColliderDetector : AColliderDectector
 {
-    public EnemyController enemyController;
+    public AEnemyController enemyController;
 
     private void ColliderExercuting(GameObject collidedObject)
     {

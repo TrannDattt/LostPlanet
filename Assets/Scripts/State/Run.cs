@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Run : State
@@ -8,7 +9,8 @@ public class Run : State
 
     public override void EnterState()
     {
-        animator.Play(clip.name);
+        Animator.Play(clip.name);
+        Completed = true;
     }
 
     public override void ExitState()
@@ -18,17 +20,16 @@ public class Run : State
 
     public override void FixUpdateState()
     {
-
+        ChangeBodyVelocity();
     }
 
     public override void UpdateState()
     {
-        float _speed = Helpers.Map(body.velocity.magnitude, 0, runSpeed, 0, 1, false);
-        animator.speed = _speed;
 
-        if (core.norAttacking)
-        {
-            completed = true;
-        }
+    }
+
+    private void ChangeBodyVelocity()
+    {
+        Body.velocity = core.MoveDir * runSpeed;
     }
 }

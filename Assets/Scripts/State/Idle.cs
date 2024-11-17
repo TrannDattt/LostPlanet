@@ -6,7 +6,8 @@ public class Idle : State
 {
     public override void EnterState()
     {
-        animator.Play(clip.name);
+        Animator.Play(clip.name);
+        Completed = true;
     }
 
     public override void ExitState()
@@ -16,19 +17,11 @@ public class Idle : State
 
     public override void FixUpdateState()
     {
-        
+        Body.velocity = Vector2.zero;
     }
 
     public override void UpdateState()
     {
-        animator.speed = 1;
 
-        float _time = Helpers.Map(time, 0, 1, 0, animator.speed, true);
-        animator.Play(clip.name, 0, _time);
-
-        if (core.norAttacking || body.velocity.magnitude > 0)
-        {
-            completed = true;
-        }
     }
 }

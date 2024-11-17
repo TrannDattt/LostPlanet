@@ -6,7 +6,7 @@ public class ProjectileInit : State
 {
     public override void EnterState()
     {
-        animator.Play(clip.name);
+        Animator.Play(clip.name);
     }
 
     public override void ExitState()
@@ -21,9 +21,9 @@ public class ProjectileInit : State
 
     public override void UpdateState()
     {
-        if(time >= clip.length / animator.speed)
+        if(Time >= clip.length / Animator.speed)
         {
-            completed = true;
+            Completed = true;
             Destroy(core.gameObject);
         }
     }

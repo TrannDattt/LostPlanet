@@ -7,36 +7,18 @@ using UnityEngine.InputSystem;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
-public class PlayerController : Core
+public class PlayerController : AController
 {
     // State
     public Idle idleState;
     public Run runState;
     public Dash dashState;
     public NormalAttack normalAttackState;
-    public ChargeAttack chargeAttackState;
-    public ReleaseChargeAttack releaseChargeAttackState;
+    public PlayerSpecialSkill specialSkillState;
     public Hurt hurtState;
     public Die dieState;
 
-    public bool rangedAttack = false;
-
-    //For ranged attack
-    public GameObject projectileObject;
-    protected GameObject spawnProjectile;
-
-    float holdTimeCount;
-
     public InputAction moveAction;
-
-    public float inputX { get; private set; }
-    public float inputY { get; private set; }
-
-    public float inviTime;
-    private bool canTakeDamage = true;
-
-    // UI
-    //[SerializeField] GameObject charUI;
 
     // Start is called before the first frame update
     void Start()
@@ -55,131 +37,77 @@ public class PlayerController : Core
     }
 
     // Update is called once per frame
-    protected override void Update()
+    protected void Update()
     {
-        base.Update();
+        state.UpdateBranchState();
 
-        GetStatus();
-        ChoseState();
+        SelectState();
     }
 
-    protected override void FixedUpdate()
+    protected void FixedUpdate()
     {
-        base.FixedUpdate();
+        state.FixUpdateBranchState();
 
-        SetBodyVelocity();
+        GetMovementInput();
+        ChangeFaceDir();
     }
 
     private IEnumerator StopGame()
     {
         yield return new WaitForSeconds(1);
-        Time.timeScale = 0;
+        ServiceLocator.Instance.PlayerDie();
     }
 
-    void GetStatus()
+    private void GetMovementInput()
     {
-        if(curHealth <= 0 && !death)
+        MoveDir = moveAction.ReadValue<Vector2>();
+    }
+
+    private void ChangeFaceDir()
+    {
+        if (MoveDir.x != 0)
         {
-            death = true;
-            body.simulated = false;
+            body.transform.localScale = new Vector3(Mathf.Sign(MoveDir.x), 1, 1);
+        }
+    }
+
+    private void SelectState()
+    {
+        if(curHealth <= 0)
+        {
             StartCoroutine(StopGame());
-            //Destroy(gameObject, 1);
-        }
-
-        Vector2 direction = moveAction.ReadValue<Vector2>();
-        inputX = direction.x;
-        inputY = direction.y;
-
-        if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-            norAttacking = true;
-            //holdTimeCount = Time.time;
-        }
-
-        if (Input.GetKey(KeyCode.Mouse0))
-        {
-            if (Time.time - holdTimeCount > chargeAttackState.chargeTime)
-            {
-                charging = true;
-            }
-        }
-        else
-        {
-            holdTimeCount = Time.time;
-            charging = false;
-        }
-
-        if (charging)
-        {
-            heavyAttacking = true;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Mouse1))
-        {
-            dashing = true;
-            Dashing();
-        }
-    }
-
-    void SetBodyVelocity()
-    {
-        if (norAttacking || charging)
-        {
-            body.velocity = Vector2.zero;
-            return;
-        }
-
-        if(inputX != 0)
-        {
-            body.transform.localScale = new Vector3(Mathf.Sign(inputX), 1, 1);
-        }
-
-        body.velocity = new Vector2(inputX, inputY) * runState.runSpeed;
-    }
-
-    void ChoseState()
-    {
-        if (death)
-        {
             SetState(dieState);
             return;
         }
 
-        if (hurting)
+        if ((Input.GetKey(specialSkillState.keyHold) && canAttack) || (!specialSkillState.Completed))
+        {
+            canAttack = false;
+            SetState(specialSkillState);
+            return;
+        }
+
+        if (hurting || !hurtState.Completed)
         {
             SetState(hurtState);
             return;
         }
 
-        if (dashing)
+        if ((Input.GetMouseButtonDown(1) && canDash) || (!dashState.Completed))
         {
+            canDash = false;
             SetState(dashState);
             return;
         }
 
-        if (heavyAttacking && !charging)
+        if ((Input.GetMouseButtonUp(0) && canAttack) || (!normalAttackState.Completed))
         {
-            SetState(releaseChargeAttackState);
+            canAttack = false;
+            SetState(normalAttackState);
             return;
         }
 
-        if (norAttacking)
-        {
-            if (!rangedAttack)
-            {
-                SetState(normalAttackState);
-                return;
-            }
-            
-        }
-
-        if (charging)
-        {
-            SetState(chargeAttackState);
-            return;
-        }
-
-        if (body.velocity.magnitude > 0)
+        if (!Mathf.Approximately(MoveDir.magnitude, 0) && dashState.Completed)
         {
             SetState(runState);
             return;
@@ -188,34 +116,16 @@ public class PlayerController : Core
         SetState(idleState);
     }
 
-    public void ChangeHealth(float amount, bool harmed)
+    public override void ChangeHealth(float amount, bool harmed = true)
     {
-        if (harmed)
-        {
-            if(canTakeDamage)
-            {
-                canTakeDamage = false;
-                StartCoroutine(InviCoolDown());
-
-                curHealth = Mathf.Clamp(curHealth - amount, 0, maxHealth);
-                hurting = true;
-            }
-        }
-        else
+        if (!harmed)
         {
             curHealth = Mathf.Clamp(curHealth + amount, 0, maxHealth);
         }
-    }
-
-    private IEnumerator InviCoolDown()
-    {
-        yield return new WaitForSeconds(inviTime);
-        canTakeDamage = true;
-    }
-
-    void Dashing()
-    {
-        body.transform.position += new Vector3(body.velocity.x * dashState.dashSpeed, 0);
+        else
+        {
+            curHealth = Mathf.Clamp(curHealth - amount, 0, maxHealth);
+        }
     }
 
     public void ChangeCoinHave(int amount, bool isGain)
@@ -227,6 +137,33 @@ public class PlayerController : Core
         else
         {
             coinHave -= amount;
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("EnemyAttack"))
+        {
+            SingleAttack attack = collision.GetComponent<SingleAttack>();
+
+            if (canHurt && attack)
+            {
+                canHurt = false;
+                hurting = true;
+                ChangeHealth(attack.damage);
+            }
+        }
+
+        if (collision.gameObject.layer == LayerMask.NameToLayer("EnemyProjectile"))
+        {
+            AProjectile projectile = collision.GetComponent<AProjectile>();
+
+            if (canHurt && projectile)
+            {
+                canHurt = false;
+                hurting = true;
+                ChangeHealth(projectile.damage);
+            }
         }
     }
 }

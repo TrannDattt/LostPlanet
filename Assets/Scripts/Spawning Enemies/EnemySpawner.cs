@@ -8,90 +8,69 @@ using UnityEngine.UIElements;
 public class EnemySpawner : MonoBehaviour
 {
     // Spawn enemies
-    public SpawnPosition[] spawnPostions;
-    int enemyInThisLevel { get; set; }
-    public SpawnPosition activePosition { get; set; }
+    public List<EnemyType> enemyTypes;
 
-    GameObject spawnedEnemy;
-    GameObject lastEnemy;
-    public GameObject boss;
+    public BoxCollider2D spawnRange;
 
-    bool bossSummoned = false;
-
-    float spawnTime = 2;
-    float spawnInterval = 5;
+    public float startSpawnTime = 1;
+    public float spawnRate = 0.5f;
 
     // Start is called before the first frame update
     void Start()
     {
-        enemyInThisLevel = 0;
-        foreach (SpawnPosition spawnPosition in spawnPostions)
-        {
-            spawnPosition.Init();
-            enemyInThisLevel += spawnPosition.enemies.Count;
-        }
-
-        InvokeRepeating("SpawnEnemy", spawnTime, spawnInterval);
+        InvokeRepeating("SpawnEnemy", startSpawnTime, spawnRate);
+        //StartCoroutine(SpawnEnemy());
     }
 
-    // Update is called once per frame
-    void Update()
+    private void SpawnEnemy()
     {
-        if (lastEnemy && !bossSummoned)
+        if (enemyTypes.Count <= 0) 
         {
-            SummonBoss();
-        }
-
-        if (bossSummoned && boss.GetComponent<EnemyController>().curHealth <= 0)
-        {
-            FinishStage();
-        }
-    }
-
-    void SpawnEnemy()
-    {
-        if (activePosition)
-        {
-            if (activePosition.enemies.Count > 0)
-            {
-                int randomIndex = Random.Range(0, activePosition.enemies.Count);
-                spawnedEnemy = activePosition.enemies[randomIndex];
-                activePosition.enemies.Remove(spawnedEnemy);
-                enemyInThisLevel--;
-
-                if (enemyInThisLevel == 0)
-                {
-                    lastEnemy = spawnedEnemy;
-                }
-
-                Instantiate(spawnedEnemy, Helpers.RandomizePosition(activePosition), Quaternion.identity);
-            }
-        }
-    }
-
-    public void SetActivePosition(SpawnPosition position)
-    {
-        activePosition = position;
-    }
-
-    void SummonBoss()
-    {
-        Instantiate(boss, Helpers.RandomizePosition(activePosition), Quaternion.identity);
-
-        bossSummoned = true;
-    }
-
-    void FinishStage()
-    {
-        int curLevel = SceneManager.GetActiveScene().buildIndex;
-
-        if (curLevel + 1 > SceneManager.sceneCountInBuildSettings)
-        {
-            SceneManager.LoadScene(0);
             return;
         }
-        SceneManager.LoadScene(curLevel + 1);
 
-        PlayerPrefs.SetInt("LevelSave", curLevel + 1);
+        EnemyType enemyType = enemyTypes[0];
+
+        if (enemyType.count > 0)
+        {
+            if (enemyType.enemy.GetType() == typeof(BabyBoxer))
+            {
+                EnemyPooling.Instance.SpawnBabyBoxer(GetRandomSpawnPos());
+            }
+
+            if (enemyType.enemy.GetType() == typeof(ToasterBot))
+            {
+                EnemyPooling.Instance.SpawnToasterBot(GetRandomSpawnPos());
+            }
+
+            if (enemyType.enemy.GetType() == typeof(BncBot))
+            {
+                EnemyPooling.Instance.SpawnBncBot(GetRandomSpawnPos());
+            }
+
+            enemyType.count--;
+        }
+
+        if (enemyType.count <= 0)
+        {
+            enemyTypes.RemoveAt(0);
+        }
     }
+
+    private Vector2 GetRandomSpawnPos()
+    {
+        float topBound = spawnRange.bounds.max.y;
+        float bottomBound = spawnRange.bounds.min.y;
+        float leftBound = spawnRange.bounds.min.x;
+        float rightBound = spawnRange.bounds.max.x;
+
+        return new Vector2(Random.Range(leftBound, rightBound), Random.Range(bottomBound, topBound));
+    }
+}
+
+[System.Serializable]
+public class EnemyType
+{
+    public AEnemyController enemy;
+    public int count;
 }

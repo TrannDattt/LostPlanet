@@ -4,11 +4,34 @@ using UnityEngine;
 
 public class SingleAttack : State
 {
-    public float damage => core.damage;
+    public AProjectile projectile;
+
+    public float damage;
+    public float knockBackForce = 1;
 
     public override void EnterState()
     {
-        animator.Play(clip.name);
+        Animator.Play(clip.name);
+
+        if (projectile != null)
+        {
+            switch (projectile)
+            {
+                case Grenade:
+                    ProjectilePooling.Instance.FireGrenade(core.gameObject.transform, core.target.transform.position);
+                    break;
+
+                case Beam:
+                    ProjectilePooling.Instance.FireBeam(core.gameObject.transform, core.target.transform.position);
+                    break;
+
+                case Bullet:
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
 
     public override void ExitState()
@@ -23,22 +46,11 @@ public class SingleAttack : State
 
     public override void UpdateState()
     {
-        animator.speed = playSpeed;
-        float _time = Helpers.Map(time, 0, 1, 0, animator.speed, true);
+        Body.velocity = Vector2.zero;
 
-        body.velocity = Vector2.zero;
-
-        animator.Play(clip.name, 0, _time);
-
-        if (time >= clip.length / animator.speed)
+        if (Time >= clip.length)
         {
-            completed = true;
-
-            core.norAttacking = false;
-            //if (core.heavyAttacking)
-            //{
-                core.heavyAttacking = false;
-            //}
+            Completed = true;
         }
     }
 }

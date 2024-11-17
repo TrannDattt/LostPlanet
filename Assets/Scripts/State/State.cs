@@ -4,21 +4,22 @@ using UnityEngine;
 
 public abstract class State : MonoBehaviour
 {
-    protected Core core;
+    protected AController core;
 
-    protected Animator animator => core.animator;
-    protected Rigidbody2D body => core.body;
+    protected Animator Animator => core.animator;
+    protected Rigidbody2D Body => core.body;
+    protected CharacterAudio CharacterAudio => core.characterAudio;
 
     public AnimationClip clip;
-    public float playSpeed = 1;
+    //public float playSpeed = 1;
     float startTime;
-    public float time => Time.time - startTime;
+    public float Time => UnityEngine.Time.time - startTime;
 
-    public bool completed {  get; protected set; }
+    public bool Completed {  get; protected set; }
 
     public StateMachine stateMachine;
     protected StateMachine parent;
-    protected State state => stateMachine.state;
+    protected State ChildState => stateMachine.state;
 
     public abstract void EnterState();
 
@@ -36,11 +37,11 @@ public abstract class State : MonoBehaviour
     public void InitialState()
     {
         stateMachine = new StateMachine();
-        startTime = Time.time;
-        completed = false;
+        startTime = UnityEngine.Time.time;
+        Completed = false;
     }
 
-    public void SetCore(Core _core)
+    public void SetCore(AController _core)
     {
         this.core = _core;
     }
@@ -52,24 +53,24 @@ public abstract class State : MonoBehaviour
 
     private void Awake()
     {
-        completed = true;
+        Completed = true;
     }
 
     public void UpdateBranchState()
     {
         UpdateState();
-        if (state)
+        if (ChildState)
         {
-            state.UpdateBranchState();
+            ChildState.UpdateBranchState();
         }
     }
 
     public void FixUpdateBranchState()
     {
         FixUpdateState();
-        if (state)
+        if (ChildState)
         {
-            state.FixUpdateBranchState();
+            ChildState.FixUpdateBranchState();
         }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public abstract class AUIManager : MonoBehaviour
 {
-    public Core core;
+    public AController core;
 
     public AHpManager hpManager;
     //public AMpManager mpManager;

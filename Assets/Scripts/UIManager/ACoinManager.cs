@@ -5,12 +5,12 @@ using UnityEngine;
 
 public class ACoinManager : MonoBehaviour
 {
-    private Core core;
+    private AController core;
     public TextMeshProUGUI coinTMPU;
 
     protected int coinHave => core.coinHave;
 
-    public void SetCore(Core core)
+    public void SetCore(AController core)
     {
         this.core = core;
     }

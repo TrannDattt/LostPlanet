@@ -5,10 +5,13 @@ using UnityEngine;
 public class Dash : State
 {
     public float dashSpeed;
+    public TrailRenderer dashTrail;
+    public float resetDashTime;
 
     public override void EnterState()
     {
-        animator.Play(clip.name);
+        Animator.Play(clip.name);
+        dashTrail.emitting = true;
     }
 
     public override void ExitState()
@@ -23,15 +26,28 @@ public class Dash : State
 
     public override void UpdateState()
     {
-        animator.speed = 2.5f;
 
-        float _time = Helpers.Map(time, 0, 1, 0, animator.speed, true);
-        animator.Play(clip.name, 0, _time);
-
-        if (time >= clip.length / animator.speed)
+        if (!Completed)
         {
-            completed = true;
-            core.dashing = false;
+            Dashing();
         }
+
+        if (Time > clip.length) 
+        {
+            StartCoroutine(ResetDash());
+            dashTrail.emitting = false;
+            Completed = true;
+        }
+    }
+
+    private void Dashing()
+    {
+        Body.velocity = core.MoveDir * dashSpeed;
+    }
+
+    private IEnumerator ResetDash()
+    {
+        yield return new WaitForSeconds(resetDashTime);
+        core.canDash = true;
     }
 }

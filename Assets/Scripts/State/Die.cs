@@ -6,7 +6,7 @@ public class Die : State
 {
     public override void EnterState()
     {
-        animator.Play(clip.name);
+        Animator.Play(clip.name);
     }
 
     public override void ExitState()
@@ -21,9 +21,9 @@ public class Die : State
 
     public override void UpdateState()
     {
-        animator.speed = 1;
-        float _time = Helpers.Map(time, 0, 1, 0, animator.speed, true);
+        Animator.speed = 1;
+        float _time = Helpers.Map(Time, 0, 1, 0, Animator.speed, true);
 
-        animator.Play(clip.name, 0, _time);
+        Animator.Play(clip.name, 0, _time);
     }
 }

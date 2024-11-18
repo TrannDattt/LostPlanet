@@ -73,8 +73,9 @@ public class PlayerController : AController
 
     private void SelectState()
     {
-        if(curHealth <= 0)
+        if(curHealth <= 0 && !isDeath)
         {
+            isDeath = true;
             StartCoroutine(StopGame());
             SetState(dieState);
             return;

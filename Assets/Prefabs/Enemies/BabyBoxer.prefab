@@ -603,12 +603,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8113aff4f7f271745b97bd5550a915fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
-  coinHave: 100
+  maxHealth: 20
+  coinHave: 50
   body: {fileID: 2669615043613651421}
   animator: {fileID: 3964082240500531218}
   characterAudio: {fileID: 6982956228070011586}
   target: {fileID: 0}
+  isDeath: 0
   canAttack: 0
   canDash: 0
   canHurt: 0

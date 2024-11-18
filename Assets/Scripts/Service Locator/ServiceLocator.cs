@@ -70,7 +70,7 @@ public class ServiceLocator : Singleton<ServiceLocator>
 
     private void Start()
     {
-        Debug.Log(PlayerPrefs.GetInt("LevelSave"));
+        //Debug.Log(PlayerPrefs.GetInt("LevelSave"));
         //Debug.Log(SceneManager.sceneCountInBuildSettings);
     }
 }

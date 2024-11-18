@@ -906,12 +906,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 651c747ea57d3a5449eeeb16ca4104e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 150
-  coinHave: 150
+  maxHealth: 50
+  coinHave: 100
   body: {fileID: 7683713871562458663}
   animator: {fileID: 4293095580447615604}
   characterAudio: {fileID: 0}
   target: {fileID: 0}
+  isDeath: 0
   canAttack: 0
   canDash: 0
   canHurt: 0

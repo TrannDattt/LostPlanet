@@ -24,16 +24,16 @@ public abstract class AController : MonoBehaviour
     //public bool rangedAttack = false;
     public Vector2 MoveDir { get; protected set; }
 
+    public bool isDeath;
     public bool canAttack;
-
     public bool canDash;
-
     public bool canHurt;
     public bool hurting;
 
     public virtual void SetInstance()
     {
         curHealth = maxHealth;
+        isDeath = false;
         canAttack = true;
         canDash = true;
         canHurt = true;

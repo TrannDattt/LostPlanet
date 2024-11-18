@@ -8,7 +8,7 @@ using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 using UnityEngine.Windows;
 
-public class AEnemyController : AController
+public abstract class AEnemyController : AController
 {
     // State
     public Idle idleState;
@@ -50,11 +50,13 @@ public class AEnemyController : AController
         }
     }
 
-    private void SelectState()
+    protected virtual void SelectState()
     {
-        if (curHealth <= 0)
+        if (curHealth <= 0 && !isDeath)
         {
+            isDeath = true;
             SetState(dieState);
+            TMPPooling.Instance.SpawnCoinTMP(target.transform.position + Vector3.up * 0.5f, "+" + coinHave.ToString());
             StartCoroutine(ReturnToPool());
             return;
         }

@@ -150,5 +150,5 @@ MonoBehaviour:
   text: {fileID: 7895378954714856699}
   rectTransform: {fileID: 8071573349663858276}
   textType: 1
-  flySpeed: 0.2
+  flySpeed: 0.05
   visibleTime: 0.5

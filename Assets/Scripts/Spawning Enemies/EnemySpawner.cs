@@ -8,52 +8,44 @@ using UnityEngine.UIElements;
 public class EnemySpawner : MonoBehaviour
 {
     // Spawn enemies
-    public List<EnemyType> enemyTypes;
+    public List<EnemySpawnedType> enemySpawnedTypes;
 
     public BoxCollider2D spawnRange;
 
     public float startSpawnTime = 1;
     public float spawnRate = 0.5f;
 
-    // Start is called before the first frame update
-    void Start()
+    //private void Start()
+    //{
+        //EnemyPooling.Instance.SpawnFromPool(enemySpawnedTypes[0].enemy, GetRandomSpawnPos());
+    //}
+
+    void Update()
     {
-        InvokeRepeating("SpawnEnemy", startSpawnTime, spawnRate);
+        if (enemySpawnedTypes.Count > 0)
+        {
+            Invoke(nameof(SpawnEnemy), spawnRate);
+        }
         //StartCoroutine(SpawnEnemy());
     }
 
     private void SpawnEnemy()
     {
-        if (enemyTypes.Count <= 0) 
+        var enemySpawnedType = new EnemySpawnedType();
+        if (enemySpawnedTypes.Count > 0)
         {
-            return;
+            enemySpawnedType = enemySpawnedTypes[0];
+        }
+        
+        if (enemySpawnedType.amount > 0)
+        {
+            EnemyPooling.Instance.SpawnFromPool(enemySpawnedType.enemy, GetRandomSpawnPos());
+            enemySpawnedType.amount--;
         }
 
-        EnemyType enemyType = enemyTypes[0];
-
-        if (enemyType.count > 0)
+        if (enemySpawnedType.amount == 0 && enemySpawnedTypes.Count > 0)
         {
-            if (enemyType.enemy.GetType() == typeof(BabyBoxer))
-            {
-                EnemyPooling.Instance.SpawnBabyBoxer(GetRandomSpawnPos());
-            }
-
-            if (enemyType.enemy.GetType() == typeof(ToasterBot))
-            {
-                EnemyPooling.Instance.SpawnToasterBot(GetRandomSpawnPos());
-            }
-
-            if (enemyType.enemy.GetType() == typeof(BncBot))
-            {
-                EnemyPooling.Instance.SpawnBncBot(GetRandomSpawnPos());
-            }
-
-            enemyType.count--;
-        }
-
-        if (enemyType.count <= 0)
-        {
-            enemyTypes.RemoveAt(0);
+            enemySpawnedTypes.RemoveAt(0);
         }
     }
 
@@ -69,8 +61,8 @@ public class EnemySpawner : MonoBehaviour
 }
 
 [System.Serializable]
-public class EnemyType
+public class EnemySpawnedType
 {
-    public AEnemyController enemy;
-    public int count;
+    public Enemy enemy;
+    public int amount;
 }

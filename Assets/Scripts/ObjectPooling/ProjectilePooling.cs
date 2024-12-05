@@ -5,59 +5,65 @@ using static Unity.VisualScripting.Member;
 
 public class ProjectilePooling : Singleton<ProjectilePooling>
 {
-    private Queue<Grenade> grenadeQueue = new Queue<Grenade>();
-    private Queue<Beam> beamQueue = new Queue<Beam>();
-    private Queue<Bullet> bulletQueue = new Queue<Bullet>();
+    private Queue<Projectile> grenadeQueue = new();
+    private Queue<Projectile> beamQueue = new();
+    private Queue<Projectile> bulletQueue = new();
 
-    public Grenade grenade;
-    public Beam beam;
-    public Bullet bullet;
+    [SerializeField] private Projectile grenade;
+    [SerializeField] private Projectile beam;
+    [SerializeField] private Projectile bullet;
 
-    public void ReturnObjectToPool(AProjectile projectile)
+    public void ReturnObjectToPool(Projectile projectile)
     {
-        switch (projectile)
+        switch (projectile.ProjectileType)
         {
-            case Grenade _grenade:
-                grenadeQueue.Enqueue(_grenade);
+            case EProjectileType.Grenade:
+                grenadeQueue.Enqueue(projectile);
                 break;
 
-            case Beam _beam:
-                beamQueue.Enqueue(_beam);
+            case EProjectileType.Beam:
+                beamQueue.Enqueue(projectile);
                 break;
 
-            case Bullet _bullet:
-                bulletQueue.Enqueue(_bullet);
-                break;
-
-            default:
+            case EProjectileType.Bullet:
+                bulletQueue.Enqueue(projectile);
                 break;
         }
     }
 
-    public void FireGrenade(Transform source, Vector2 targetPos)
+    public void FireProjectile(Projectile projectile, Transform source, Vector2 flyDir)
     {
-        if(grenadeQueue.Count == 0)
+        switch (projectile.ProjectileType)
         {
-            Grenade newGrenade = Instantiate(grenade, source.position, Quaternion.identity);
-            grenadeQueue.Enqueue(newGrenade);
+            case EProjectileType.Grenade:
+                if (grenadeQueue.Count == 0)
+                {
+                    var newGrenade = Instantiate(grenade, source.position, Quaternion.identity);
+                    grenadeQueue.Enqueue(newGrenade);
+                }
+
+                grenadeQueue.Dequeue().gameObject.GetComponent<ProjectileManager>().Init(source, flyDir);
+                break;
+
+            case EProjectileType.Beam:
+                if (beamQueue.Count == 0)
+                {
+                    var newBeam = Instantiate(beam, source.position, Quaternion.identity);
+                    beamQueue.Enqueue(newBeam);
+                }
+
+                beamQueue.Dequeue().gameObject.GetComponent<ProjectileManager>().Init(source, flyDir);
+                break;
+
+            case EProjectileType.Bullet:
+                if (bulletQueue.Count == 0)
+                {
+                    var newBullet = Instantiate(bullet, source.position, Quaternion.identity);
+                    bulletQueue.Enqueue(newBullet);
+                }
+
+                bulletQueue.Dequeue().gameObject.GetComponent<ProjectileManager>().Init(source, flyDir);
+                break;
         }
-
-        grenadeQueue.Dequeue().SetInstance(source, targetPos);
-    }
-
-    public void FireBullet(Vector2 spawnPos, Vector2 targetPos)
-    {
-
-    }
-
-    public void FireBeam(Transform source, Vector2 targetPos)
-    {
-        if (beamQueue.Count == 0)
-        {
-            Beam newBeam = Instantiate(beam, source.position, Quaternion.identity);
-            beamQueue.Enqueue(newBeam);
-        }
-
-        beamQueue.Dequeue().SetInstance(source, targetPos);
     }
 }

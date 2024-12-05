@@ -1,53 +1,38 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Dash : State
+public class Dash : AnimState
 {
-    public float dashSpeed;
+    [SerializeField] private float speedMultiplier;
+    private float DashSpeed => Unit.stats.CurSpeed * speedMultiplier;
+
     public TrailRenderer dashTrail;
-    public float resetDashTime;
 
     public override void EnterState()
     {
-        Animator.Play(clip.name);
+        base.EnterState();
+
         dashTrail.emitting = true;
     }
 
     public override void ExitState()
     {
-        
+        base.ExitState();
+
+        dashTrail.emitting = false;
     }
 
     public override void FixUpdateState()
     {
+        base.FixUpdateState();
 
+        ChangeBodyVelocity();
     }
 
-    public override void UpdateState()
+    private void ChangeBodyVelocity()
     {
-
-        if (!Completed)
-        {
-            Dashing();
-        }
-
-        if (Time > clip.length) 
-        {
-            StartCoroutine(ResetDash());
-            dashTrail.emitting = false;
-            Completed = true;
-        }
-    }
-
-    private void Dashing()
-    {
-        Body.velocity = core.MoveDir * dashSpeed;
-    }
-
-    private IEnumerator ResetDash()
-    {
-        yield return new WaitForSeconds(resetDashTime);
-        core.canDash = true;
+        Body.velocity = Unit.MoveDir * DashSpeed;
     }
 }

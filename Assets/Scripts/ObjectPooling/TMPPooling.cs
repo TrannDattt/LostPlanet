@@ -2,15 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class TMPPooling : Singleton<TMPPooling>
 {
-    private Queue<PopUpText> damageTMPQueue = new Queue<PopUpText>();
-    private Queue<PopUpText> coinTMPQueue = new Queue<PopUpText>();
-    //private Queue<PopUpText> damageTMPQueue = new Queue<PopUpText>();
+    private Queue<PopUpText> damageTMPQueue = new();
+    private Queue<PopUpText> coinTMPQueue = new();
+    private Queue<Slider> enemyHpBarQueue = new();
 
     public PopUpText damageTMP;
     public PopUpText coinTMP;
+    public Slider enemyHpBar;
 
     public Canvas canvas;
 
@@ -29,6 +31,11 @@ public class TMPPooling : Singleton<TMPPooling>
             default:
                 break;
         }
+    }
+
+    public void ReturnHpBarToPool(Slider hpBar)
+    {
+        enemyHpBarQueue.Enqueue(hpBar);
     }
 
     public void SpawnDamageTMP(Vector2 spawnPos, string text)
@@ -51,5 +58,19 @@ public class TMPPooling : Singleton<TMPPooling>
         }
 
         coinTMPQueue.Dequeue().SetInstacne(spawnPos, text);
+    }
+
+    public Slider SpawnHpBar(Vector2 spawnPos)
+    {
+        if(enemyHpBarQueue.Count == 0)
+        {
+            var newEnemyHpBar = Instantiate(enemyHpBar, canvas.transform);
+            enemyHpBarQueue.Enqueue(newEnemyHpBar);
+        }
+
+        var spawnedHpBar = enemyHpBarQueue.Dequeue();
+        spawnedHpBar.transform.position = spawnPos;
+
+        return spawnedHpBar;
     }
 }

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -8,16 +8,20 @@ public class ServiceLocator : Singleton<ServiceLocator>
 {
     public AudioManager audioManager;
     public GameUIManager gameUIManager;
+    public DialogManager dialogManager;
+    public MapManager mapManager;
 
     public void NewGame()
     {
-        PlayerPrefs.SetInt("LevelSave", 1);
-        SceneManager.LoadScene(1);
+        string firstMap = "Map1-1";
+
+        PlayerPrefs.SetString("LevelSave", firstMap);
+        SceneManager.LoadScene(firstMap);
     }
 
     public void Continue()
     {
-        SceneManager.LoadScene(PlayerPrefs.GetInt("LevelSave"));
+        SceneManager.LoadScene(PlayerPrefs.GetString("LevelSave"));
     }
 
     public void Quit()
@@ -41,7 +45,7 @@ public class ServiceLocator : Singleton<ServiceLocator>
 
     public void Restart()
     {
-        SceneManager.LoadScene(PlayerPrefs.GetInt("LevelSave"));
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         Unpause();
     }
 
@@ -51,14 +55,11 @@ public class ServiceLocator : Singleton<ServiceLocator>
         Time.timeScale = 1.0f;
     }
 
-    public void NextLevel()
+    public void NavigateToLevel(string nextLevelName)
     {
-        int curScene = PlayerPrefs.GetInt("LevelSave");
-        int nextScene = curScene + 1 >= SceneManager.sceneCountInBuildSettings ? 0 : curScene + 1;
+        PlayerPrefs.SetString("LevelSave", nextLevelName);
 
-        PlayerPrefs.SetInt("LevelSave", nextScene);
-
-        SceneManager.LoadScene(nextScene);
+        SceneManager.LoadScene(nextLevelName);
     }
 
     public void PlayerDie()
@@ -68,9 +69,24 @@ public class ServiceLocator : Singleton<ServiceLocator>
         gameUIManager.AcivateScene(gameUIManager.dieScene);
     }
 
+    public void StartDialog()
+    {
+        //gameUIManager.AcivateScene(gameUIManager.dialogScene);
+        Time.timeScale = 0f;
+        dialogManager.StartDialog();
+    }
+
+    public void StopDialog() 
+    {
+        dialogManager.StopDialog();
+        Time.timeScale = 1f;
+        //gameUIManager.DisableScene(gameUIManager.dialogScene);
+    }
+
     private void Start()
     {
         //Debug.Log(PlayerPrefs.GetInt("LevelSave"));
         //Debug.Log(SceneManager.sceneCountInBuildSettings);
+        //StartDialog();
     }
 }

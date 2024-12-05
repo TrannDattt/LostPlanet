@@ -46,3 +46,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damageTMP: {fileID: 5508510509274089261, guid: bc7585c6d987f5f459e7eb140963c6a8, type: 3}
   coinTMP: {fileID: 5508510509274089261, guid: 6633b4bab6c1a2d45a64e5264245a5b0, type: 3}
+  enemyHpBar: {fileID: 4939241860744542167, guid: 444c43dd0f80a0143acd755374edc89a, type: 3}
+  canvas: {fileID: 0}

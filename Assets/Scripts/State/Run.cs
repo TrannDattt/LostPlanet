@@ -1,35 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
-public class Run : State
+public class Run : AnimState
 {
-    public float runSpeed;
-
-    public override void EnterState()
-    {
-        Animator.Play(clip.name);
-        Completed = true;
-    }
-
-    public override void ExitState()
-    {
-
-    }
+    public float RunSpeed => Unit.stats.CurSpeed;
 
     public override void FixUpdateState()
     {
+        base.FixUpdateState();
+
         ChangeBodyVelocity();
-    }
-
-    public override void UpdateState()
-    {
-
     }
 
     private void ChangeBodyVelocity()
     {
-        Body.velocity = core.MoveDir * runSpeed;
+        Body.velocity = Unit.MoveDir * RunSpeed;
     }
 }

@@ -2,39 +2,38 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Hurt : State
+public class Hurt : AnimState
 {
-    public float resetHurtTime;
+    public GameObject hurtEffect;
+    public AnimationClip hurtEffectClip;
+
+    private Animator hurtEffectAnimator;
 
     public override void EnterState()
     {
-        Animator.Play(clip.name);
+        base.EnterState();
+
         //CharacterAudio.PlayHurtSound();
+        StartCoroutine(PopHurtEffect());
     }
 
     public override void ExitState()
     {
-        //core.hurting = false;
+        base .ExitState();
+
+        hurtEffect.SetActive(false);
     }
 
-    public override void FixUpdateState()
+    private void Start()
     {
-
+        hurtEffectAnimator = hurtEffect.GetComponent<Animator>();
+        hurtEffect.SetActive(false);
     }
 
-    public override void UpdateState()
+    private IEnumerator PopHurtEffect()
     {
-        if (Time >= clip.length / Animator.speed)
-        {
-            core.hurting = false;
-            StartCoroutine(ResetHurt());
-            Completed = true;
-        }
-    }
-
-    private IEnumerator ResetHurt()
-    {
-        yield return new WaitForSeconds(resetHurtTime);
-        core.canHurt = true;
+        hurtEffect.SetActive(true);
+        yield return null;
+        hurtEffectAnimator.Play(hurtEffectClip.name);
     }
 }

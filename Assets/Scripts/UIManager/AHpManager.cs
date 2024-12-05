@@ -5,18 +5,18 @@ using UnityEngine.UI;
 
 public abstract class AHpManager : MonoBehaviour 
 {
-    private AController core;
+    private AUnit core;
     public Slider hpSlider;
 
-    protected float healthPercentage => core.curHealth / core.maxHealth;
+    //protected float healthPercentage => core.curHealth / core.maxHealth;
 
-    public void SetCore(AController core)
+    public void SetCore(AUnit core)
     {
         this.core = core;
     }
 
     public void SetHpBar()
     {
-        hpSlider.value = healthPercentage;
+        //hpSlider.value = healthPercentage;
     }
 }

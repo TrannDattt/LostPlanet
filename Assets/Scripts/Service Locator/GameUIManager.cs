@@ -6,11 +6,13 @@ public class GameUIManager : MonoBehaviour
 {
     public GameObject pauseScene;
     public GameObject dieScene;
+    //public GameObject dialogScene;
 
     void Awake()
     {
         DisableScene(pauseScene);
         DisableScene(dieScene);
+        //DisableScene(dialogScene);
     }
 
     public void AcivateScene(GameObject scene)
@@ -21,10 +23,5 @@ public class GameUIManager : MonoBehaviour
     public void DisableScene(GameObject scene)
     {
         scene.SetActive(false);
-    }
-
-    public void ChangeCharacterHealth(AController character, float curHealth, float maxHealth)
-    {
-
     }
 }

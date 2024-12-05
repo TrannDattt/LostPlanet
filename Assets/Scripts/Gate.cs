@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Gate : MonoBehaviour
 {
+    public string levelName;
+
     private bool isActivated = false;
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -11,7 +13,7 @@ public class Gate : MonoBehaviour
         if (!isActivated)
         {
             isActivated = true;
-            ServiceLocator.Instance.NextLevel();
+            ServiceLocator.Instance.NavigateToLevel(levelName);
         }
     }
 }

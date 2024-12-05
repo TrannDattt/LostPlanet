@@ -4,26 +4,38 @@ using UnityEngine;
 
 public class StateMachine
 {
-    public State state;
+    public AnimState state;
 
-    public void SetState(State _state, bool forceReset = false)
+    public IEnumerator SetState(AnimState _state, bool forceChange = false)
     {
-        if((_state != state) || forceReset)
+        if (state == null || (_state != state && state.status == EStateStatus.Finish && _state.status == EStateStatus.Ready) || forceChange)
         {
-            if (state)
+            if(state != null)
             {
+                if(forceChange)
+                {
+                    state.status = EStateStatus.Finish;
+                }
+
                 state.ExitState();
+                yield return new WaitForSeconds(state.transitionTime);
+            }
+            else
+            {
+                //Debug.Log("null");
             }
 
             state = _state;
             state.InitialState();
             state.EnterState();
         }
+
+        yield return null;
     }
 
-    public List<State> GetActiveStatesBranch(List<State> states = null)
+    public List<AnimState> GetActiveStatesBranch(List<AnimState> states = null)
     {
-        if(states == null)
+        if (states == null)
         {
             states = new(); 
         }
@@ -35,7 +47,7 @@ public class StateMachine
         else
         {
             states.Add(state);
-            return state.stateMachine.GetActiveStatesBranch(states);
+            return state.StateMachine.GetActiveStatesBranch(states);
         }
     }
 }

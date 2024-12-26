@@ -3,20 +3,48 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
+using static AnimStateMachine;
+using static UnityEngine.UI.CanvasScaler;
 
-public class Run : AnimState
+[System.Serializable]
+public class Run : AAnimState<EStateKey>
 {
-    public float RunSpeed => Unit.stats.CurSpeed;
+    //public Run(EStateKey stateKey, AUnit unit) : base(stateKey, unit) { }
 
-    public override void FixUpdateState()
+    public override void EnterState()
     {
-        base.FixUpdateState();
-
-        ChangeBodyVelocity();
+        unit.Core.animator.speed = playSpeed;
+        unit.Core.animator.Play(clip.name);
+        startTime = Time.time;
+        Status = EStatus.Doing;
     }
 
-    private void ChangeBodyVelocity()
+    public override void ExitState() { }
+
+    public override void FixUpdateState() => unit.transform.localPosition = Vector3.Lerp(unit.transform.localPosition,
+                                                                                         unit.transform.localPosition + (Vector3)unit.MoveDir.normalized,
+                                                                                         unit.Status.CurSpeed * Time.fixedDeltaTime);
+
+    public override EStateKey GetNextState()
     {
-        Body.velocity = Unit.MoveDir * RunSpeed;
+        if (Mathf.Approximately(unit.MoveDir.magnitude, 0))
+        {
+            return EStateKey.Idle;
+        }
+
+        if (unit is Player && Input.GetKeyDown(KeyCode.Mouse0) || unit is Enemy enemy && enemy.CanAttack)
+        {
+            return EStateKey.Attack;
+        }
+
+        return EStateKey.Run;
     }
+
+    public override void OnTriggerEnter2D(Collider2D other) { }
+
+    public override void OnTriggerExit2D(Collider2D other) { }
+
+    public override void OnTriggerStay2D(Collider2D other) { }
+
+    public override void UpdateState() => Status = EStatus.Finished;
 }

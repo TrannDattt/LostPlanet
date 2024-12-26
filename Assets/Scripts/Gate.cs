@@ -5,15 +5,14 @@ using UnityEngine;
 public class Gate : MonoBehaviour
 {
     public string levelName;
+    private bool isTriggered;
 
-    private bool isActivated = false;
-
-    private void OnTriggerEnter2D(Collider2D collision)
+    public async void Navigating()
     {
-        if (!isActivated)
-        {
-            isActivated = true;
-            ServiceLocator.Instance.NavigateToLevel(levelName);
+        if(!isTriggered)
+        { 
+            isTriggered = true;
+            await GameManager.Instance.StartLevel(levelName); 
         }
     }
 }

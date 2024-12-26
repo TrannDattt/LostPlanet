@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3891049853334051817
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1155508602970745157}
+  - component: {fileID: 8138556270541011446}
+  m_Layer: 0
+  m_Name: EnemyPooling
+  m_TagString: Untagged
+  m_Icon: {fileID: 419385456094870383, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!4 &1155508602970745157
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3891049853334051817}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8138556270541011446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3891049853334051817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f89b1dbc9872f64cab7b8adbafab8fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  babyBoxer: {fileID: 4959665230544736004, guid: 49acaba59e8fe644699de67aef5d47d8, type: 3}
+  toasterBot: {fileID: 7368968184980380384, guid: 559758aaa4e992a479b37b7ca7ae8d58, type: 3}
+  bncBot: {fileID: 6709250310824185098, guid: f3a112fd802c3164eb83371e8f0647b5, type: 3}
+  mudGuard: {fileID: 7086703518650411850, guid: f86b343744cd0874080257aa3adc9f6a, type: 3}
+  guardian: {fileID: 3763140682519376544, guid: 1b9e435d52a114447887c9fd3e4eac91, type: 3}
+  stormHead: {fileID: 3670031617911865462, guid: e7e6f877e2eda6840b30632f81277ab9, type: 3}
+  zapBot: {fileID: 4379637824689315527, guid: 3a549c037537f92409068fc1c7a0f18d, type: 3}
+  smallMons: {fileID: 798119367595141298, guid: 2cee0dcee88d9134eb1e6a3b9b2d0c47, type: 3}
+  botWheel: {fileID: 8245925344680328492, guid: 09a790254f6b9af40a7faa4490e52f01, type: 3}

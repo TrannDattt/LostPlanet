@@ -6,17 +6,34 @@ using UnityEngine.UI;
 
 public abstract class AUnitUI : MonoBehaviour
 {
-    protected AUnit unit;
-    [SerializeField] protected Slider hpBar;
-    //[SerializeField] TextMeshProUGUI coinCounter;
+    protected UnitStatus status;
+    [SerializeField] protected Image hpBar;
+    [SerializeField] protected PopUpText unitDamageText;
 
-    public virtual void SetInstance(AUnit unit)
+    protected virtual void Awake()
     {
-        this.unit = unit;
+        status = GetComponent<UnitStatus>();
     }
 
-    public void UpdateHpBar()
+    protected virtual void OnEnable()
     {
-        hpBar.value = unit.stats.CurHealth / unit.stats.baseHealth;
+        status.OnChangeCurHealth += UpdateHpBar;
+        status.OnChangeCurHealth += PopUpDamageText;
+    }
+
+    protected virtual void OnDisable()
+    {
+        status.OnChangeCurHealth -= UpdateHpBar;
+        status.OnChangeCurHealth -= PopUpDamageText;
+    }
+
+    public void UpdateHpBar(float amount)
+    {
+        hpBar.fillAmount = status.CurHealth / status.baseHealth;
+    }
+
+    public void PopUpDamageText(float amount)
+    {
+        TMPPooling.Instance.GetFromPool(unitDamageText, amount.ToString(), transform.position + .5f * Vector3.up);
     }
 }

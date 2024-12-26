@@ -6,9 +6,31 @@ using UnityEngine;
 public class PlayerUI : AUnitUI
 {
     [SerializeField] private TextMeshProUGUI coinCounter;
+    [SerializeField] protected PopUpText coinText;
 
-    public void UpdateCoinHave()
+    protected override void OnEnable()
     {
-        coinCounter.text = unit.stats.CurCoinHave.ToString();
+        base.OnEnable();
+
+        status.OnChangeCoin += PopUpCoinText;
+        status.OnChangeCoin += UpdateCoinHave;
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+
+        status.OnChangeCoin -= PopUpCoinText;
+        status.OnChangeCoin -= UpdateCoinHave;
+    }
+
+    public void UpdateCoinHave(int amount)
+    {
+        coinCounter.text = status.CurCoinHave.ToString();
+    }
+
+    public void PopUpCoinText(int amount)
+    {
+        TMPPooling.Instance.GetFromPool(unitDamageText, amount.ToString(), transform.position + .5f * Vector3.up);
     }
 }

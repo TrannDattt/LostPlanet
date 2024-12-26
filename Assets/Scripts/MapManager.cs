@@ -12,6 +12,8 @@ public class MapManager : MonoBehaviour
     [SerializeField] private Tile gateTile;
     [SerializeField] private GameObject mapDecor;
     [SerializeField] private List<MapDecor> decorObjects;
+    [SerializeField] private List<Gate> gates;
+    [SerializeField] private Transform startPos;
 
     [SerializeField] private int mapWidth;
     [SerializeField] private int mapHeight;
@@ -24,8 +26,11 @@ public class MapManager : MonoBehaviour
     public void InitMap()
     {
         map.transform.position = GetTileCenter(new Vector2Int((int)(-mapHeight * 0.5f) + 1, (int)(-mapHeight * 0.5f) + 1));
+
         GenerateMap();
         GenerateDecor();
+        DeactivateGates();
+        SpawnPlayer();
     }
 
     private void GenerateMap()
@@ -79,6 +84,11 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    private void SpawnPlayer()
+    {
+        Player.Instance.transform.position = startPos.position;
+    }
+
     private Vector2 GetTileCenter(Vector2Int tileCordinate)
     {
         return map.CellToWorld(new Vector3Int (tileCordinate.x, tileCordinate.y));
@@ -103,9 +113,35 @@ public class MapManager : MonoBehaviour
         return decorObject.decor;
     }
 
-    private void Start()
+    private void DeactivateGates()
     {
-        InitMap();
+        foreach (var gate in gates)
+        {
+            gate.gameObject.SetActive(false);
+        }
+    }
+
+    private void ActivateGates()
+    {
+        foreach (var gate in gates)
+        {
+            gate.gameObject.SetActive(true);
+        }
+    }
+
+    private void OnEnable()
+    {
+        if(GameManager.Instance != null)
+        {
+            GameManager.Instance.OnLevelStarted += InitMap;
+            GameManager.Instance.OnLevelCleared += ActivateGates;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.OnLevelStarted -= InitMap;
+        GameManager.Instance.OnLevelCleared -= ActivateGates;
     }
 }
 

@@ -1,87 +1,93 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using static AnimStateMachine;
 
-public class Attack : AnimState
+[System.Serializable]
+public class Attack : AAnimState<EStateKey>
 {
-    [System.Serializable]
-    public class AttackMove
-    {
-        public float damageMultiplier;
-        public AnimationClip clip;
-        public Projectile projectile;
-    }
+    [SerializeField] private List<AttackSet> attackSets;
+    //[SerializeField] private GameObject hitbox;
+    public float DamageMulti {  get; private set; }
+    private int attackIndex;
+    private bool canChangeAttack;
 
-    [SerializeField] private List<AttackMove> attackMoves;
-    private Queue<AttackMove> attackMoveQueue = new();
-
-    public float DamageDo { get; private set; }
-    [SerializeField] private EUnitType doDamageToUnit;
-    private Projectile projectile;
-
-    private void SelectAttackMove()
-    {
-        var attackMove = attackMoveQueue.Dequeue();
-        
-        clip = attackMove.clip;
-        DamageDo = attackMove.damageMultiplier * Unit.stats.CurDamage;
-        projectile = attackMove.projectile;
-
-        attackMoveQueue.Enqueue(attackMove);
-    }
+    //public Attack(EStateKey stateKey, AUnit unit) : base(stateKey, unit) { }
 
     public override void EnterState()
     {
-        SelectAttackMove();
+        SetAttack(attackIndex);
+        unit.Core.animator.speed = playSpeed;
+        unit.Core.animator.Play(clip.name);
+        startTime = Time.time;
+        Status = EStatus.Doing;
+        canChangeAttack = false;
 
-        base.EnterState();
-
-        if (projectile != null)
+        if (attackSets[attackIndex].projectile != null)
         {
-            if (Unit is Enemy _enemy)
-            {
-                ProjectilePooling.Instance.FireProjectile(projectile, _enemy.transform, _enemy.Target.transform.position - _enemy.transform.position);
-            }
-            else if (Unit is Player _player)
-            {
-                //Get mouse pos
-            }
+            var projectile = ProjectilePooling.Instance.GetFromPool(attackSets[attackIndex].projectile, unit.transform.position);
+            projectile.OnDoingDamage += DoDamage;
         }
     }
 
-    public override void FixUpdateState()
+    public override EStateKey GetNextState()
     {
-        base.FixUpdateState();
+        if (Status == EStatus.Finished)
+        {
+            return EStateKey.Idle; 
+        }
 
-        Body.velocity = Vector3.zero;
+        if (unit is Player && Input.GetKeyDown(KeyCode.Mouse0) && canChangeAttack)
+        {
+            SelectNextAttackSkill();
+            EnterState();
+        }
+
+        return EStateKey.Attack;
     }
 
-    private void Start()
+    public override void UpdateState() 
     {
-        foreach (var attackMove in attackMoves)
+        if (PlayedTime > clip.length / unit.Core.animator.speed)
         {
-            attackMoveQueue.Enqueue(attackMove);
+            canChangeAttack = true;
+
+            if (unit is not Player)
+            {
+                Status = EStatus.Finished;
+            }
+        }
+
+        if (unit is Player && PlayedTime > .2f + clip.length / unit.Core.animator.speed)
+        {
+            Status = EStatus.Finished;
         }
     }
 
-    //private void OnTriggerEnter2D(Collider2D collision)
-    //{
-    //    if (collision && collision.gameObject.TryGetComponent<AUnit>(out AUnit collidedUnit))
-    //    {
-    //        if (collidedUnit.unitType == EUnitType.Enemy && collidedUnit.unitType == doDamageToUnit)
-    //        {
-    //            collidedUnit.gameObject.GetComponent<EnemyManager>()?.ChangeHealth(collidedUnit.stats.CurDamage * DamageDo);
-    //            Debug.Log("do damage");
-    //        }
-    //        else if (collidedUnit.unitType == EUnitType.Player && collidedUnit.unitType == doDamageToUnit)
-    //        {
-    //            PlayerManager.Instance.OnDecreaseHealth(collidedUnit.stats.CurDamage * DamageDo);
-    //            Debug.Log("do damage 2");
-    //        }
-    //        //if (collidedUnit.unitType == doDamageToUnit)
-    //        //{
-    //        //    collidedUnit.DecreaseHealth(collidedUnit.stats.CurDamage * damageMultiplier);
-    //        //}
-    //    }
-    //}
+    public override void FixUpdateState() { }
+
+    public override void ExitState() => attackIndex = 0;
+
+    public override void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.TryGetComponent<AUnit>(out AUnit damagedUnit))
+        {
+            DoDamage(damagedUnit);
+        }
+    }
+
+    public override void OnTriggerStay2D(Collider2D other) { }
+
+    public override void OnTriggerExit2D(Collider2D other) { }
+
+    private void SelectNextAttackSkill() => attackIndex = (attackIndex + 1) % attackSets.Count;
+
+    private void SetAttack(int index)
+    {
+        clip = attackSets[index].clip;
+        DamageMulti = attackSets[attackIndex].damageMulti;
+    }
+
+    public void DoDamage(AUnit damagedUnit) => unit.DoDamageToUnit(damagedUnit, -1 * unit.Status.CurDamage * DamageMulti);
 }

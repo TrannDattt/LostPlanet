@@ -41,7 +41,7 @@ public class DialogManager : MonoBehaviour
         }
         else
         {
-            ServiceLocator.Instance.StopDialog();
+            GameManager.Instance.StopDialog();
         }
     }
 
@@ -58,7 +58,7 @@ public class DialogManager : MonoBehaviour
 
     public void SkipDialog()
     {
-        ServiceLocator.Instance.StopDialog();
+        GameManager.Instance.StopDialog();
     }
 
     public void StopDialog()

@@ -1,89 +1,72 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public abstract class AUnit : MonoBehaviour
 {
-    public UnitCore core; 
-    public UnitStats stats;
-    public UnitBehavior behaviors;
+    [field: SerializeField] public UnitCore Core {  get; private set; }
+    [field: SerializeField] public UnitStatus Status { get; private set; }
     public Vector2 MoveDir { get; protected set; }
 
-    public StateMachine stateMachine;
+    [SerializeField] protected AnimStateMachine animStateMachine;
 
-    public EUnitType unitType;
-
-    public virtual void SetInstance()
+    public virtual void Init()
     {
-        stats.SetUp();
-        behaviors.SetUp(this);
-
-        stateMachine = new StateMachine();
+        Status.Init(this);
+        animStateMachine.Init(this);
     }
+
+    protected virtual void FixedUpdate()
+    {
+        ChangeFaceDir();
+    }
+
+    protected virtual void ChangeFaceDir()
+    {
+        if(MoveDir.x != 0)
+        { 
+            transform.localScale = new Vector3(Mathf.Sign(MoveDir.x), 1, 1); 
+        }
+    }
+
+    protected virtual async void OnDying() => await Task.Delay(1000);
+
+    private bool IsSameFactor(AUnit unitA, AUnit unitB)
+    {
+        return unitA.GetType().Equals(unitB.GetType());
+    }
+
+    public void DoDamageToUnit(AUnit damagedUnit, float amount)
+    {
+        if(!IsSameFactor(this, damagedUnit))
+        {
+            damagedUnit.TakeDamage(amount);
+        }
+    }
+
+    public void TakeDamage(float amount)
+    {
+        if (animStateMachine.StateDict[AnimStateMachine.EStateKey.Hurt].Status == EStatus.Ready)
+        {
+            Status.ChangeCurHealth(amount);
+            animStateMachine.TransitToState(AnimStateMachine.EStateKey.Hurt);
+        }
+    }
+
+    //private void OnEnable()
+    //{
+    //    //OnChangingHealth += TMPPooling.Instance.GetFromPool(ene)
+    //}
+
+    //private void OnDisable()
+    //{
+    //    OnChangingHealth = null;
+    //    //Dying = null;
+    //}
 }
 
 public enum EUnitType
 {
     Player,
     Enemy,
-    NPC,
-    Projectile,
-}
-
-[System.Serializable]
-public class UnitStats
-{
-    public float baseHealth;
-    public float baseDamage;
-    public float baseSpeed;
-    public int startCoinHave;
-
-    public float CurHealth { get; private set; }
-    public float CurDamage { get; private set; }
-    public float CurSpeed { get; private set; }
-    public int CurCoinHave { get; private set; }
-
-    public void SetUp()
-    {
-        CurHealth = baseHealth;
-        CurDamage = baseDamage;
-        CurSpeed = baseSpeed;
-        CurCoinHave = startCoinHave;
-    }
-
-    public void ChangeHealth(float amount) => CurHealth = Mathf.Clamp(CurHealth + amount, 0, baseHealth);
-    public void LostAllCoin() => CurCoinHave = 0;
-    public void ChangeCoin(int amount) => CurCoinHave = Mathf.Clamp(CurCoinHave + amount, 0, 99999);
-}
-
-[System.Serializable]
-public class UnitBehavior
-{
-    public Idle idleState;
-    public Run runState;
-    public Dash dashState;
-    public Attack attackState;
-    public Skill skillState;
-    public Hurt hurtState;
-    public Die dieState;
-
-    public void SetUp(AUnit unit)
-    {
-        idleState?.SetCore(unit);
-        runState?.SetCore(unit);
-        dashState?.SetCore(unit);
-        attackState?.SetCore(unit);
-        skillState?.SetCore(unit);
-        hurtState?.SetCore(unit);
-        dieState?.SetCore(unit);
-    }
-}
-
-[System.Serializable]
-public class UnitCore
-{
-    public Rigidbody2D body;
-    public Animator animator;
-    public UnitAudio unitAudio;
 }

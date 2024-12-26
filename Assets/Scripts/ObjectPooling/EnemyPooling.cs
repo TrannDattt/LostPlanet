@@ -28,137 +28,100 @@ public class EnemyPooling : Singleton<EnemyPooling>
     {
         switch (enemy.EnemyType)
         {
-            case EEnemyType.BnCBot:
-                bncBotQueue.Enqueue(enemy);
-                break;
-
-            case EEnemyType.ToasterBot:
-                toasterBotQueue.Enqueue(enemy);
-                break;
-
             case EEnemyType.BabyBoxer:
                 babyBoxerQueue.Enqueue(enemy);
                 break;
 
-            case EEnemyType.MudGuard:
+            case EEnemyType.ToasterBot :
+                toasterBotQueue.Enqueue(enemy);
+                break;
+
+            case EEnemyType.BncBot :
+                bncBotQueue.Enqueue(enemy);
+                break;
+
+            case EEnemyType.MudGuard :
                 mudGuardQueue.Enqueue(enemy);
                 break;
 
-            case EEnemyType.StormHead:
+            case EEnemyType.StormHead :
                 stormHeadQueue.Enqueue(enemy);
                 break;
 
-            case EEnemyType.ZapBot:
+            case EEnemyType.ZapBot :
                 zapBotQueue.Enqueue(enemy);
                 break;
 
-            case EEnemyType.Guardian:
+            case EEnemyType.Guardian :
                 guardianQueue.Enqueue(enemy);
                 break;
 
-            case EEnemyType.BotWheel:
+            case EEnemyType.BotWheel :
                 botWheelQueue.Enqueue(enemy);
                 break;
 
-            case EEnemyType.SmallMons:
+            case EEnemyType.SmallMons :
                 smallMonsQueue.Enqueue(enemy);
                 break;
         }
     }
 
-    public void SpawnFromPool(Enemy enemy, Vector2 spawnPos)
+    public Enemy GetEnemy(Enemy enemyPreb, ref Queue<Enemy> enemyQueue, Vector2 spawnPos)
     {
-        switch (enemy.EnemyType)
+        Enemy spawnedEnemy;
+
+        if(enemyQueue.Count == 0)
         {
-            case EEnemyType.BnCBot:
-                if(bncBotQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(bncBot, spawnPos, Quaternion.identity);
-                    bncBotQueue.Enqueue(newEnemy);
-                }
-
-                bncBotQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.ToasterBot:
-                if (toasterBotQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(toasterBot, spawnPos, Quaternion.identity);
-                    toasterBotQueue.Enqueue(newEnemy);
-                }
-
-                toasterBotQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.BabyBoxer:
-                if (babyBoxerQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(babyBoxer, spawnPos, Quaternion.identity);
-                    babyBoxerQueue.Enqueue(newEnemy);
-                }
-
-                babyBoxerQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.MudGuard:
-                if (mudGuardQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(mudGuard, spawnPos, Quaternion.identity);
-                    mudGuardQueue.Enqueue(newEnemy);
-                }
-
-                mudGuardQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.StormHead:
-                if (stormHeadQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(stormHead, spawnPos, Quaternion.identity);
-                    stormHeadQueue.Enqueue(newEnemy);
-                }
-
-                stormHeadQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.ZapBot:
-                if (zapBotQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(zapBot, spawnPos, Quaternion.identity);
-                    zapBotQueue.Enqueue(newEnemy);
-                }
-
-                zapBotQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.Guardian:
-                if (guardianQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(guardian, spawnPos, Quaternion.identity);
-                    guardianQueue.Enqueue(newEnemy);
-                }
-
-                guardianQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.BotWheel:
-                if (botWheelQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(botWheel, spawnPos, Quaternion.identity);
-                    botWheelQueue.Enqueue(newEnemy);
-                }
-
-                botWheelQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
-
-            case EEnemyType.SmallMons:
-                if (smallMonsQueue.Count == 0)
-                {
-                    var newEnemy = Instantiate(smallMons, spawnPos, Quaternion.identity);
-                    smallMonsQueue.Enqueue(newEnemy);
-                }
-
-                smallMonsQueue.Dequeue().GetComponent<EnemyManager>().Init(spawnPos);
-                break;
+            spawnedEnemy = Instantiate(enemyPreb, spawnPos, Quaternion.identity); 
         }
+        else
+        {
+            spawnedEnemy = enemyQueue.Dequeue(); 
+            //Debug.Log("dq");
+        }
+
+        spawnedEnemy.transform.position = spawnPos;
+        spawnedEnemy.Init();
+        return spawnedEnemy;
+    }
+
+    public Enemy GetFromPool(Enemy enemy, Vector2 spawnPos)
+    {
+        return enemy.EnemyType switch
+        {
+            EEnemyType.BabyBoxer => GetEnemy(babyBoxer, ref babyBoxerQueue, spawnPos),
+            EEnemyType.ToasterBot => GetEnemy(toasterBot, ref toasterBotQueue, spawnPos),
+            EEnemyType.BncBot => GetEnemy(bncBot, ref bncBotQueue, spawnPos),
+            EEnemyType.MudGuard => GetEnemy(mudGuard, ref mudGuardQueue, spawnPos),
+            EEnemyType.StormHead => GetEnemy(stormHead, ref stormHeadQueue, spawnPos),
+            EEnemyType.ZapBot => GetEnemy(zapBot, ref zapBotQueue, spawnPos),
+            EEnemyType.Guardian => GetEnemy(guardian, ref guardianQueue, spawnPos),
+            EEnemyType.BotWheel => GetEnemy(botWheel, ref botWheelQueue, spawnPos),
+            EEnemyType.SmallMons => GetEnemy(smallMons, ref smallMonsQueue, spawnPos),
+            _ => null,
+        };
+    }
+
+    private void ResetPool()
+    {
+        babyBoxerQueue = new();
+        bncBotQueue = new();
+        toasterBotQueue = new();
+        mudGuardQueue = new();
+        stormHeadQueue = new();
+        zapBotQueue = new();
+        guardianQueue = new();
+        botWheelQueue = new();
+        smallMonsQueue = new();
+    }
+
+    private void Start()
+    {
+        GameManager.Instance.OnLevelStarted += ResetPool;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.Instance.OnLevelStarted -= ResetPool;
     }
 }

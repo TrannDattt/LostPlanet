@@ -1,39 +1,52 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
+using static AnimStateMachine;
 
-public class Hurt : AnimState
+[System.Serializable]
+public class Hurt : AAnimState<EStateKey>
 {
-    public GameObject hurtEffect;
-    public AnimationClip hurtEffectClip;
-
-    private Animator hurtEffectAnimator;
+    //public Hurt(EStateKey stateKey, AUnit unit) : base(stateKey, unit) { }
 
     public override void EnterState()
     {
-        base.EnterState();
+        unit.Core.animator.speed = playSpeed;
+        unit.Core.animator.Play(clip.name);
+        startTime = Time.time;
+        Status = EStatus.Doing;
+    }
+    public override void ExitState() { }
 
-        //CharacterAudio.PlayHurtSound();
-        StartCoroutine(PopHurtEffect());
+    public override void FixUpdateState() => unit.Core.body.velocity = Vector2.zero;
+
+    public override EStateKey GetNextState()
+    {
+        if(unit.Status.CurHealth <= 0)
+        {
+            Status = EStatus.Finished;
+            return EStateKey.Die;
+        }
+
+        if(Status == EStatus.Finished)
+        {
+            return EStateKey.Idle;
+        }
+
+        return EStateKey.Hurt;
     }
 
-    public override void ExitState()
-    {
-        base .ExitState();
+    public override void OnTriggerEnter2D(Collider2D other) { }
 
-        hurtEffect.SetActive(false);
-    }
+    public override void OnTriggerExit2D(Collider2D other) { }
 
-    private void Start()
-    {
-        hurtEffectAnimator = hurtEffect.GetComponent<Animator>();
-        hurtEffect.SetActive(false);
-    }
+    public override void OnTriggerStay2D(Collider2D other) { }
 
-    private IEnumerator PopHurtEffect()
+    public override void UpdateState()
     {
-        hurtEffect.SetActive(true);
-        yield return null;
-        hurtEffectAnimator.Play(hurtEffectClip.name);
+        if (PlayedTime > clip.length / unit.Core.animator.speed)
+        {
+            Status = EStatus.Finished;
+        }
     }
 }

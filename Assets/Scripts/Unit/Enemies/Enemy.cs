@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Unity.IO.LowLevel.Unsafe;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SocialPlatforms.Impl;
@@ -12,46 +14,62 @@ using static UnityEngine.EventSystems.EventTrigger;
 public class Enemy : AUnit
 {
     public GameObject Target { get; private set; }
-
-    [field: SerializeField] public EEnemyType EnemyType { get; private set; }
     [field:SerializeField] public float TriggerRange { get; private set; } 
     [field:SerializeField] public float AttackRange { get; private set; }
+    [field:SerializeField] public EEnemyType EnemyType { get; private set; }
 
-    public delegate void ChangeHealth(float amount);
-    public event ChangeHealth DecreaseHealth;
-    public event ChangeHealth IncreaseHealth;
+    public bool InAttackRange => GetPlayerOffset().magnitude <= AttackRange;
+    public bool InTriggerRange => GetPlayerOffset().magnitude <= TriggerRange;
+    public bool CanAttack => InAttackRange && animStateMachine.StateDict[AnimStateMachine.EStateKey.Attack].Status == EStatus.Ready;
 
-    public override void SetInstance()
+    public event Action Dying;
+
+    private bool haveReturned;
+
+    public override void Init()
     {
-        base.SetInstance();
+        gameObject.SetActive(true);
+        haveReturned = false;
 
-        Target = PlayerManager.Instance.gameObject;
+        base.Init();
+
+        Target = Player.Instance.gameObject;
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        MoveDir = (Target.transform.position - transform.position).normalized;
-    }
+        MoveDir = (!InAttackRange && InTriggerRange) ? GetPlayerOffset() : Vector2.zero;
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision != null)
+        if(Status.CurHealth <= 0 && !haveReturned)
         {
-            if (collision.gameObject.TryGetComponent<Attack>(out Attack attack))
-            {
-                if (attack.gameObject.CompareTag("PlayerAttack"))
-                {
-                    DecreaseHealth(attack.DamageDo);
-                }
-            }
-            else if (collision.gameObject.TryGetComponent<Skill>(out Skill skill))
-            {
-                if (skill.gameObject.CompareTag("PlayerAttack"))
-                {
-                    DecreaseHealth(skill.DamageDo);
-                }
-            }
+            haveReturned = true;
+            Dying?.Invoke();
+            ReturnToPool();
         }
+    }
+
+    private Vector2 GetPlayerOffset()
+    {
+        return Target.transform.position - transform.position;
+    }
+
+    protected override void ChangeFaceDir()
+    {
+        if (GetPlayerOffset().x != 0)
+        {
+            transform.localScale = new Vector3(Mathf.Sign(GetPlayerOffset().x), 1, 1);
+        }
+    }
+
+    private async void ReturnToPool()
+    {
+        Player.Instance.Status.ChangeCoin(Status.CurCoinHave);
+        Dying = null;
+
+        await Task.Delay(1000);
+        gameObject.SetActive(false);
+
+        EnemyPooling.Instance.ReturnObjectToPool(this);
     }
 }
 
@@ -59,7 +77,7 @@ public enum EEnemyType
 {
     BabyBoxer,
     ToasterBot,
-    BnCBot,
+    BncBot,
     BotWheel,
     Guardian,
     MudGuard,

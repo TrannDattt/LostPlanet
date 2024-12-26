@@ -1,18 +1,15 @@
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class TMPPooling : Singleton<TMPPooling>
 {
-    private Queue<PopUpText> damageTMPQueue = new();
+    private Queue<PopUpText> enemyDamageTMPQueue = new();
+    private Queue<PopUpText> playerDamageTMPQueue = new();
     private Queue<PopUpText> coinTMPQueue = new();
-    private Queue<Slider> enemyHpBarQueue = new();
 
-    public PopUpText damageTMP;
+    public PopUpText enemyDamageTMP;
+    public PopUpText playerDamageTMP;
     public PopUpText coinTMP;
-    public Slider enemyHpBar;
 
     public Canvas canvas;
 
@@ -20,8 +17,12 @@ public class TMPPooling : Singleton<TMPPooling>
     {
         switch (obj.textType)
         {
-            case ETextType.Damage:
-                damageTMPQueue.Enqueue(obj);
+            case ETextType.PlayerDamage:
+                playerDamageTMPQueue.Enqueue(obj);
+                break;
+
+            case ETextType.EnemyDamage:
+                enemyDamageTMPQueue.Enqueue(obj);
                 break;
 
             case ETextType.Coin:
@@ -33,44 +34,38 @@ public class TMPPooling : Singleton<TMPPooling>
         }
     }
 
-    public void ReturnHpBarToPool(Slider hpBar)
+    private PopUpText GetPUT(PopUpText put, ref Queue<PopUpText> putQueue, string content, Vector2 spawnPos)
     {
-        enemyHpBarQueue.Enqueue(hpBar);
+        PopUpText spawnPUT = putQueue.Count == 0 ? Instantiate(playerDamageTMP, canvas.transform) : putQueue.Dequeue();
+        spawnPUT.Init(content, spawnPos);
+        return spawnPUT;
     }
 
-    public void SpawnDamageTMP(Vector2 spawnPos, string text)
+    public PopUpText GetFromPool(PopUpText put, string content, Vector2 spawnPos)
     {
-        if(damageTMPQueue.Count == 0)
+        return put.textType switch
         {
-            PopUpText newDamageTMP = Instantiate(damageTMP, canvas.transform);
-            damageTMPQueue.Enqueue(newDamageTMP);
-        }
-
-        damageTMPQueue.Dequeue().SetInstacne(spawnPos, text);
+            ETextType.PlayerDamage => GetPUT(playerDamageTMP, ref playerDamageTMPQueue, content, spawnPos),
+            ETextType.EnemyDamage => GetPUT(enemyDamageTMP, ref enemyDamageTMPQueue, content, spawnPos),
+            ETextType.Coin => GetPUT(coinTMP, ref coinTMPQueue, content, spawnPos),
+            _ => null,
+        };
     }
 
-    public void SpawnCoinTMP(Vector2 spawnPos, string text)
+    private void ResetPool()
     {
-        if (coinTMPQueue.Count == 0)
-        {
-            PopUpText newCoinTMP = Instantiate(coinTMP, canvas.transform);
-            coinTMPQueue.Enqueue(newCoinTMP);
-        }
-
-        coinTMPQueue.Dequeue().SetInstacne(spawnPos, text);
+        playerDamageTMPQueue = new();
+        enemyDamageTMPQueue = new();
+        coinTMPQueue = new();
     }
 
-    public Slider SpawnHpBar(Vector2 spawnPos)
+    private void Start()
     {
-        if(enemyHpBarQueue.Count == 0)
-        {
-            var newEnemyHpBar = Instantiate(enemyHpBar, canvas.transform);
-            enemyHpBarQueue.Enqueue(newEnemyHpBar);
-        }
+        GameManager.Instance.OnLevelStarted += ResetPool;
+    }
 
-        var spawnedHpBar = enemyHpBarQueue.Dequeue();
-        spawnedHpBar.transform.position = spawnPos;
-
-        return spawnedHpBar;
+    private void OnDisable()
+    {
+        GameManager.Instance.OnLevelStarted -= ResetPool;
     }
 }

@@ -31,39 +31,49 @@ public class ProjectilePooling : Singleton<ProjectilePooling>
         }
     }
 
-    public void FireProjectile(Projectile projectile, Transform source, Vector2 flyDir)
+    private Projectile GetProjectile(Projectile projectile, Queue<Projectile> projectileQueue, Vector2 spawnPos)
     {
-        switch (projectile.ProjectileType)
+        Projectile spawnedProjectile;
+
+        if (projectileQueue.Count == 0)
         {
-            case EProjectileType.Grenade:
-                if (grenadeQueue.Count == 0)
-                {
-                    var newGrenade = Instantiate(grenade, source.position, Quaternion.identity);
-                    grenadeQueue.Enqueue(newGrenade);
-                }
-
-                grenadeQueue.Dequeue().gameObject.GetComponent<ProjectileManager>().Init(source, flyDir);
-                break;
-
-            case EProjectileType.Beam:
-                if (beamQueue.Count == 0)
-                {
-                    var newBeam = Instantiate(beam, source.position, Quaternion.identity);
-                    beamQueue.Enqueue(newBeam);
-                }
-
-                beamQueue.Dequeue().gameObject.GetComponent<ProjectileManager>().Init(source, flyDir);
-                break;
-
-            case EProjectileType.Bullet:
-                if (bulletQueue.Count == 0)
-                {
-                    var newBullet = Instantiate(bullet, source.position, Quaternion.identity);
-                    bulletQueue.Enqueue(newBullet);
-                }
-
-                bulletQueue.Dequeue().gameObject.GetComponent<ProjectileManager>().Init(source, flyDir);
-                break;
+            spawnedProjectile = Instantiate(projectile, spawnPos, Quaternion.identity);
         }
+        else
+        {
+            spawnedProjectile = projectileQueue.Dequeue();
+        }
+
+        spawnedProjectile.transform.localPosition = spawnPos;
+        spawnedProjectile.Init();
+        return spawnedProjectile;
+    }
+
+    public Projectile GetFromPool(Projectile projectile, Vector2 spawnPos)
+    {
+        return projectile.ProjectileType switch
+        {
+            EProjectileType.Grenade => GetProjectile(grenade, grenadeQueue, spawnPos),
+            EProjectileType.Beam => GetProjectile(beam, beamQueue, spawnPos),
+            EProjectileType.Bullet => GetProjectile(bullet, bulletQueue, spawnPos),
+            _ => null,
+        };
+    }
+
+    private void ResetPool()
+    {
+        beamQueue = new();
+        bulletQueue = new();
+        grenadeQueue = new();
+    }
+
+    private void Start()
+    {
+        GameManager.Instance.OnLevelStarted += ResetPool;
+    }
+
+    private void OnDisable()
+    {
+        GameManager.Instance.OnLevelStarted -= ResetPool;
     }
 }

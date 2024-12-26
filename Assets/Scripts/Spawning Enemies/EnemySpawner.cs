@@ -1,52 +1,74 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UIElements;
 
-public class EnemySpawner : MonoBehaviour
+public class EnemySpawner : Singleton<EnemySpawner>
 {
+    [System.Serializable]
+    public class EnemySpawnedType
+    {
+        public Enemy enemy;
+        public int amount;
+    }
+
+    [System.Serializable]
+    public class EnemyWave
+    {
+        public List<EnemySpawnedType> enemySpawnedTypes;
+    }
+
     // Spawn enemies
-    public List<EnemySpawnedType> enemySpawnedTypes;
+    [SerializeField] private List<EnemyWave> enemyWaves;
+    [SerializeField] private BoxCollider2D spawnRange;
+    private float startSpawnTime = 3;
 
-    public BoxCollider2D spawnRange;
-
-    public float startSpawnTime = 1;
-    public float spawnRate = 0.5f;
+    private int enemyCount;
+    private bool isSpawning;
 
     //private void Start()
     //{
-        //EnemyPooling.Instance.SpawnFromPool(enemySpawnedTypes[0].enemy, GetRandomSpawnPos());
+    //    SpawnEnemyWave(0);
+    //    curWaveIndex = 0;
     //}
 
     void Update()
     {
-        if (enemySpawnedTypes.Count > 0)
+        if(enemyCount == 0)
         {
-            Invoke(nameof(SpawnEnemy), spawnRate);
+            if(enemyWaves.Count == 0)
+            {
+                GameManager.Instance.LevelCleared();
+                enemyCount--;
+            }
+            else if(!isSpawning)
+            {
+                isSpawning = true;
+                StartSpawning();
+            }
         }
-        //StartCoroutine(SpawnEnemy());
     }
 
-    private void SpawnEnemy()
+    public void StartSpawning()
     {
-        var enemySpawnedType = new EnemySpawnedType();
-        if (enemySpawnedTypes.Count > 0)
+        StartCoroutine(SpawnEnemyWave());
+    }
+
+    private IEnumerator SpawnEnemyWave()
+    {
+        yield return new WaitForSeconds(startSpawnTime);
+
+        foreach (var enemyType in enemyWaves[0].enemySpawnedTypes)
         {
-            enemySpawnedType = enemySpawnedTypes[0];
-        }
-        
-        if (enemySpawnedType.amount > 0)
-        {
-            EnemyPooling.Instance.SpawnFromPool(enemySpawnedType.enemy, GetRandomSpawnPos());
-            enemySpawnedType.amount--;
+            for (int counter = 0; counter < enemyType.amount; counter++)
+            {
+                var spawnedEnemy = EnemyPooling.Instance.GetFromPool(enemyType.enemy, GetRandomSpawnPos());
+                spawnedEnemy.Dying += SpawnedEnemyDied;
+                enemyCount++;
+            }
         }
 
-        if (enemySpawnedType.amount == 0 && enemySpawnedTypes.Count > 0)
-        {
-            enemySpawnedTypes.RemoveAt(0);
-        }
+        enemyWaves.RemoveAt(0);
+        isSpawning = false;
     }
 
     private Vector2 GetRandomSpawnPos()
@@ -58,11 +80,19 @@ public class EnemySpawner : MonoBehaviour
 
         return new Vector2(Random.Range(leftBound, rightBound), Random.Range(bottomBound, topBound));
     }
-}
 
-[System.Serializable]
-public class EnemySpawnedType
-{
-    public Enemy enemy;
-    public int amount;
+    private void SpawnedEnemyDied()
+    {
+        enemyCount--;
+    }
+
+    private void OnEnable()
+    {
+        //GameManager.Instance.OnLevelStarted += StartSpawning;
+    }
+
+    private void OnDisable()
+    {
+        //GameManager.Instance.OnLevelStarted -= StartSpawning;
+    }
 }

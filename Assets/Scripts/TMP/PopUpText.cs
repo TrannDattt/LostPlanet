@@ -16,7 +16,7 @@ public class PopUpText : MonoBehaviour
     private float timeCount = 0;
     private bool isVisible = false;
 
-    public void SetInstacne(Vector2 spawnPos, string content)
+    public void Init(string content, Vector2 spawnPos)
     {
         rectTransform.position = spawnPos;
         text.SetText(content);
@@ -47,4 +47,11 @@ public class PopUpText : MonoBehaviour
             ReturnToPool();
         }
     }
+}
+
+public enum ETextType
+{
+    PlayerDamage,
+    EnemyDamage,
+    Coin,
 }
